@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Busca de Hospitais</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background-color: #f9f9f9;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    input, select, button {
+      font-size: 1rem;
+      padding: 0.75rem;
+      margin-top: 0.25rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      margin-top: 0.5rem;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .result {
+      background-color: white;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    @media (min-width: 600px) {
+      .button-group {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+
+      button {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Busca de Hospitais</h1>
+
+  <div class="form-group">
+    <label for="estado">Estado:</label>
+    <select id="estado">
+      <option value="">Todos</option>
+      <option value="AC">AC</option>
+      <option value="AL">AL</option>
+      <option value="AP">AP</option>
+      <option value="AM">AM</option>
+      <option value="BA">BA</option>
+      <option value="CE">CE</option>
+      <option value="DF">DF</option>
+      <option value="ES">ES</option>
+      <option value="GO">GO</option>
+      <option value="MA">MA</option>
+      <option value="MT">MT</option>
+      <option value="MS">MS</option>
+      <option value="MG">MG</option>
+      <option value="PA">PA</option>
+      <option value="PB">PB</option>
+      <option value="PR">PR</option>
+      <option value="PE">PE</option>
+      <option value="PI">PI</option>
+      <option value="RJ">RJ</option>
+      <option value="RN">RN</option>
+      <option value="RS">RS</option>
+      <option value="RO">RO</option>
+      <option value="RR">RR</option>
+      <option value="SC">SC</option>
+      <option value="SP">SP</option>
+      <option value="SE">SE</option>
+      <option value="TO">TO</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="cidade">Cidade:</label>
+    <input type="text" id="cidade" placeholder="Digite a cidade">
+  </div>
+
+  <div class="button-group">
+    <button onclick="buscar()">Buscar Manualmente</button>
+    <button onclick="buscarPorLocalizacao()">Buscar por Localização</button>
+  </div>
+
+  <div id="resultados"></div>
+
+  <script>
+    const urlGoogleSheets = "https://docs.google.com/spreadsheets/d/e/SEU_LINK/pub?output=csv";
+    let dados = [];
+
+    async function carregarDados() {
+      const response = await fetch(urlGoogleSheets);
+      const texto = await response.text();
+      const linhas = texto.trim().split('\n');
+      const cabecalhos = linhas[0].split(',');
+
+      dados = linhas.slice(1).map(linha => {
+        const valores = linha.split(',');
+        let obj = {};
+        cabecalhos.forEach((chave, i) => obj[chave.trim()] = valores[i]?.trim());
+        return obj;
+      });
+    }
+
+    function mostrarResultados(lista) {
+      const container = document.getElementById('resultados');
+      container.innerHTML = '';
+      if (lista.length === 0) {
+        container.innerHTML = '<p>Nenhum resultado encontrado.</p>';
+        return;
+      }
+      lista.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'result';
+        div.innerHTML = `
+          <strong>${item.Nome}</strong><br>
+          ${item.Endereço}<br>
+          ${item.Cidade} - ${item.Estado}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function buscar() {
+      const cidade = document.getElementById('cidade').value.toLowerCase();
+      const estado = document.getElementById('estado').value;
+      const filtrados = dados.filter(h => {
+        const matchCidade = h.Cidade.toLowerCase().includes(cidade);
+        const matchEstado = !estado || h.Estado === estado;
+        return matchCidade && matchEstado;
+      });
+      mostrarResultados(filtrados);
+    }
+
+    function buscarPorLocalizacao() {
+      if (!navigator.geolocation) {
+        alert("Geolocalização não suportada.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        const proximos = dados
+          .filter(h => h.Latitude && h.Longitude)
+          .map(h => {
+            const dist = calcularDistancia(latitude, longitude, parseFloat(h.Latitude), parseFloat(h.Longitude));
+            return { ...h, distancia: dist };
+          })
+          .sort((a, b) => a.distancia - b.distancia)
+          .slice(0, 5);
+        mostrarResultados(proximos);
+      });
+    }
+
+    function calcularDistancia(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    carregarDados();
+  </script>
+</body>
+</html>

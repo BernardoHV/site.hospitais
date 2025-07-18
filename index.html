@@ -120,118 +120,106 @@
   <div id="resultados"></div>
 
   <script>
-    const urlGoogleSheets = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSua7NvCdUqzugjXv-MM8yGv1-Om-eKnwnC6X8MI0omsnDj-D-lro7jYdta7unmfTrYhRaOMSzcOJjB/pub?gid=1497335567&single=true&output=csv";
-    let dados = [];
+  const urlGoogleSheets = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSua7NvCdUqzugjXv-MM8yGv1-Om-eKnwnC6X8MI0omsnDj-D-lro7jYdta7unmfTrYhRaOMSzcOJjB/pub?gid=1497335567&single=true&output=csv";
+  let dados = [];
 
-    async function carregarDados() {
-      const response = await fetch(urlGoogleSheets);
-      const texto = await response.text();
-      const linhas = texto.trim().split('\n');
-      const cabecalhos = linhas[0].split(',');
+  async function carregarDados() {
+    const response = await fetch(urlGoogleSheets);
+    const texto = await response.text();
+    const linhas = texto.trim().split('\n');
+    const cabecalhos = linhas[0].split(',');
 
-      dados = linhas.slice(1).map(linha => {
-        const valores = linha.split(',');
-        let obj = {};
-        cabecalhos.forEach((chave, i) => obj[chave.trim()] = valores[i]?.trim());
-        return obj;
-      });
-            console.log("Cabeçalhos:", cabecalhos);
-            console.log("Primeira linha de dados:", dados[0]);
-    }
+    dados = linhas.slice(1).map(linha => {
+      const valores = linha.split(',');
+      let obj = {};
+      cabecalhos.forEach((chave, i) => obj[chave.trim()] = valores[i]?.trim());
+      return obj;
+    });
 
-    function mostrarResultados(lista) {
-      const container = document.getElementById('resultados');
-      container.innerHTML = '';
-      if (lista.length === 0) {
-        container.innerHTML = '<p>Nenhum resultado encontrado.</p>';
-        return;
-      }
-      lista.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'result';
-        div.innerHTML = `
-          <strong>${item.Nome}</strong><br>
-          ${item.Endereço}<br>
-          ${item.Cidade} - ${item.Estado}
-        `;
-        container.appendChild(div);
-      });
-    }
-
-function buscar() {
-  const cidadeInput = document.getElementById('cidade').value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const estado = document.getElementById('estado').value;
-
-  console.log("Valor digitado:", cidade);
-  console.log("Estado selecionado:", estado);
-  console.log("Primeiro item dos dados:", dados[0]);
-
-
-  const filtrados = dados.filter(h => {
-    const cidadeHospital = h.Cidade?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const estadoHospital = h.Estado?.trim().toUpperCase();
-
-    const matchCidade = cidadeHospital?.includes(cidadeInput);
-    const matchEstado = !estado || estadoHospital === estado;
-    return matchCidade && matchEstado;
-  });
-
-  mostrarResultados(filtrados);
-}
-
-
-
-function buscarPorLocalizacao() {
-  if (!navigator.geolocation) {
-    alert("Geolocalização não suportada.");
-    return;
+    console.log("Cabeçalhos:", cabecalhos);
+    console.log("Primeira linha de dados:", dados[0]);
   }
 
-  navigator.geolocation.getCurrentPosition(pos => {
-    const { latitude, longitude } = pos.coords;
+  function mostrarResultados(lista) {
+    const container = document.getElementById('resultados');
+    container.innerHTML = '';
+    if (lista.length === 0) {
+      container.innerHTML = '<p>Nenhum resultado encontrado.</p>';
+      return;
+    }
+    lista.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'result';
+      div.innerHTML = `
+        <strong>${item["Nome"]}</strong><br>
+        ${item["Endereço"]}<br>
+        ${item["Cidade"]} - ${item["Estado"]}
+      `;
+      container.appendChild(div);
+    });
+  }
 
-    const proximos = dados
-      .filter(h => {
-        const lat = parseFloat(h.Latitude);
-        const lon = parseFloat(h.Longitude);
-        return !isNaN(lat) && !isNaN(lon) &&
-               lat >= -90 && lat <= 90 &&
-               lon >= -180 && lon <= 180;
-      })
-      .map(h => {
-        const dist = calcularDistancia(
-          latitude, longitude,
-          parseFloat(h.Latitude),
-          parseFloat(h.Longitude)
-        );
-        return { ...h, distancia: dist };
-      })
-      .sort((a, b) => a.distancia - b.distancia)
-      .slice(0, 5);
+  function buscar() {
+    const cidadeInput = document.getElementById('Cidade').value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const estado = document.getElementById('Estado').value;
 
-      console.log("Latitude do usuário:", latitude);
-    console.log("Longitude do usuário:", longitude);
-    console.log("Hospitais mais próximos:", proximos);
+    const filtrados = dados.filter(h => {
+      const cidadeHospital = h["Cidade"]?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const estadoHospital = h["Estado"]?.trim().toUpperCase();
 
+      const matchCidade = cidadeHospital?.includes(cidadeInput);
+      const matchEstado = !estado || estadoHospital === estado;
+      return matchCidade && matchEstado;
+    });
 
-    mostrarResultados(proximos);
-  });
-}
+    mostrarResultados(filtrados);
+  }
 
-
-
-    function calcularDistancia(lat1, lon1, lat2, lon2) {
-      const R = 6371;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
+  function buscarPorLocalizacao() {
+    if (!navigator.geolocation) {
+      alert("Geolocalização não suportada.");
+      return;
     }
 
-    carregarDados();
-  </script>
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude, longitude } = pos.coords;
+
+      const proximos = dados
+        .filter(h => {
+          const lat = parseFloat(h["Latitude"]);
+          const lon = parseFloat(h["Longitude"]);
+          return !isNaN(lat) && !isNaN(lon) &&
+                 lat >= -90 && lat <= 90 &&
+                 lon >= -180 && lon <= 180;
+        })
+        .map(h => {
+          const dist = calcularDistancia(
+            latitude, longitude,
+            parseFloat(h["Latitude"]),
+            parseFloat(h["Longitude"])
+          );
+          return { ...h, distancia: dist };
+        })
+        .sort((a, b) => a.distancia - b.distancia)
+        .slice(0, 5);
+
+      mostrarResultados(proximos);
+    });
+  }
+
+  function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  carregarDados();
+</script>
+
 </body>
 </html>

@@ -2,223 +2,4206 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Busca de Hospitais</title>
+  <title>Buscar Hospitais</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 1rem;
-      background-color: #f9f9f9;
-    }
-
-    h1 {
-      font-size: 1.5rem;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    input, select, button {
-      font-size: 1rem;
-      padding: 0.75rem;
-      margin-top: 0.25rem;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      cursor: pointer;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      margin-top: 0.5rem;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    .button-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .result {
-      background-color: white;
-      padding: 1rem;
-      margin: 1rem 0;
+      max-width: 650px;
+      margin: 20px auto;
+      padding: 20px;
+      border: 1px solid #ddd;
       border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-
-    @media (min-width: 600px) {
-      .button-group {
-        flex-direction: row;
-        justify-content: space-between;
-      }
-
-      button {
-        flex: 1;
-      }
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+    input {
+      padding: 8px;
+      margin: 5px 0;
+      width: calc(50% - 12px);
+    }
+    .hospital {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #f9f9f9;
+    }
+    h3 {
+      margin: 0 0 5px;
     }
   </style>
 </head>
 <body>
-  <h1>Busca de Hospitais</h1>
 
-  <div class="form-group">
-    <label for="estado">Estado:</label>
-    <select id="estado">
-      <option value="">Todos</option>
-      <option value="AC">AC</option>
-      <option value="AL">AL</option>
-      <option value="AP">AP</option>
-      <option value="AM">AM</option>
-      <option value="BA">BA</option>
-      <option value="CE">CE</option>
-      <option value="DF">DF</option>
-      <option value="ES">ES</option>
-      <option value="GO">GO</option>
-      <option value="MA">MA</option>
-      <option value="MT">MT</option>
-      <option value="MS">MS</option>
-      <option value="MG">MG</option>
-      <option value="PA">PA</option>
-      <option value="PB">PB</option>
-      <option value="PR">PR</option>
-      <option value="PE">PE</option>
-      <option value="PI">PI</option>
-      <option value="RJ">RJ</option>
-      <option value="RN">RN</option>
-      <option value="RS">RS</option>
-      <option value="RO">RO</option>
-      <option value="RR">RR</option>
-      <option value="SC">SC</option>
-      <option value="SP">SP</option>
-      <option value="SE">SE</option>
-      <option value="TO">TO</option>
-    </select>
-  </div>
+<h2>Buscar Hospitais</h2>
 
-  <div class="form-group">
-    <label for="cidade">Cidade:</label>
-    <input type="text" id="cidade" placeholder="Digite a cidade">
-  </div>
+<!-- Busca por Localização -->
+<button onclick="buscarLocalizacao()">📍 Buscar por Localização</button>
 
-  <div class="button-group">
-    <button onclick="buscar()">Buscar Manualmente</button>
-    <button onclick="buscarPorLocalizacao()">Buscar por Localização</button>
-  </div>
+<hr>
 
-  <div id="resultados"></div>
+<!-- Busca Manual -->
+<h3>Busca Manual</h3>
+<input type="text" id="cidade" placeholder="Digite a cidade">
+<input type="text" id="estado" placeholder="Digite o UF (Ex: MG)">
+<br>
+<button onclick="buscarManual()">🔍 Buscar por Cidade e UF</button>
 
-  <script>
-  const urlGoogleSheets = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSua7NvCdUqzugjXv-MM8yGv1-Om-eKnwnC6X8MI0omsnDj-D-lro7jYdta7unmfTrYhRaOMSzcOJjB/pub?gid=1497335567&single=true&output=csv";
-  let dados = [];
+<div id="resultado"></div>
 
-  async function carregarDados() {
-    const response = await fetch(urlGoogleSheets);
-    const texto = await response.text();
-    const linhas = texto.trim().split('\n');
-    const cabecalhos = linhas[0].split(',');
-
-    dados = linhas.slice(1).map(linha => {
-      const valores = linha.split(',');
-      let obj = {};
-      cabecalhos.forEach((chave, i) => obj[chave.trim()] = valores[i]?.trim());
-      return obj;
-    });
-
-    console.log("Cabeçalhos:", cabecalhos);
-    console.log("Primeira linha de dados:", dados[0]);
+<script>
+  // Banco de dados de hospitais
+  const hospitais = [
+  {
+    "Nome": "Pronto Atendimento Médico Dr. Avelino Arruda",
+    "Endereço": "Rua Deusdedith Alves de Souza,",
+    "Cidade": "Abaeté",
+    "Estado": "MG",
+    "Latitude": -19.1551,
+    "Longitude": -45.4444
+  },
+  {
+    "Nome": "Hospital Nossa Senhora da Conceição",
+    "Endereço": "Rua Santo Antônio, nº 29 - Centro",
+    "Cidade": "Abre Campo",
+    "Estado": "MG",
+    "Latitude": -20.2996,
+    "Longitude": -42.4743
+  },
+  {
+    "Nome": "Fundação de Assistência Social Santana de Água Boa",
+    "Endereço": "Rua Félix Couy, nº 138 - Centro",
+    "Cidade": "Água Boa",
+    "Estado": "MG",
+    "Latitude": -17.9914,
+    "Longitude": -42.3806
+  },
+  {
+    "Nome": "Hospital São Vicente",
+    "Endereço": "Rua Josino Abrantes, s/nº",
+    "Cidade": "Águas Formosas",
+    "Estado": "MG",
+    "Latitude": -17.0802,
+    "Longitude": -40.9384
+  },
+  {
+    "Nome": "Hospital Santa Lúcia",
+    "Endereço": "Rua Uberlândia, s/nº - Ipanema",
+    "Cidade": "Águas Vermelhas",
+    "Estado": "MG",
+    "Latitude": -15.7431,
+    "Longitude": -41.4571
+  },
+  {
+    "Nome": "Hospital São José e São Camilo",
+    "Endereço": "Rua Pedro Nolasco, nº 01 - Centro",
+    "Cidade": "Aimorés",
+    "Estado": "MG",
+    "Latitude": -19.5007,
+    "Longitude": -41.0746
+  },
+  {
+    "Nome": "Hospital São Salvador",
+    "Endereço": "Rua Dr. Paulo Ladeira Fonseca, nº 1778 - Vila Laroca",
+    "Cidade": "Além Paraíba",
+    "Estado": "MG",
+    "Latitude": -21.8797,
+    "Longitude": -42.7176
+  },
+  {
+    "Nome": "Hospital Universitário Alzira Velano",
+    "Endereço": "Rua Geraldo Freitas Costa, nº 120 - Centro",
+    "Cidade": "Alfenas",
+    "Estado": "MG",
+    "Latitude": -21.4256,
+    "Longitude": -45.9477
+  },
+  {
+    "Nome": "Hospital Deraldo Guimães",
+    "Endereço": "Rua Hermano Souza, nº 549 - Centro",
+    "Cidade": "Almenara",
+    "Estado": "MG",
+    "Latitude": -16.1785,
+    "Longitude": -40.6942
+  },
+  {
+    "Nome": "Sociedade Beneficente e Casa de Saúde de Alto Jequitibá",
+    "Endereço": "Praça Benfeitor Elias Sathler, nº 18 - Centro",
+    "Cidade": "Alto Jequitibá",
+    "Estado": "MG",
+    "Latitude": -20.4208,
+    "Longitude": -41.967
+  },
+  {
+    "Nome": "UBS Dr. Paulo César de Miranda",
+    "Endereço": "Avenida do Contorno, nº 34 - Centro",
+    "Cidade": "Alvarenga",
+    "Estado": "MG",
+    "Latitude": -19.4174,
+    "Longitude": -41.7317
+  },
+  {
+    "Nome": "Hospital Nossa Senhora de Lourdes",
+    "Endereço": "Av. Antônio Carlos, nº 60 - Centro. CEP 35950-000",
+    "Cidade": "Alvinópolis",
+    "Estado": "MG",
+    "Latitude": -20.1098,
+    "Longitude": -43.0535
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia de Andradas",
+    "Endereço": "Rua Capitão Cirilo, nº 668 - Alto Alegre",
+    "Cidade": "Andradas",
+    "Estado": "MG",
+    "Latitude": -22.0695,
+    "Longitude": -46.5724
+  },
+  {
+    "Nome": "Unidade Saúde Dr José G. Alves",
+    "Endereço": "Rodovia Israel Pinheiro, s/nº - Quincas Tibúrcio",
+    "Cidade": "Andrelândia",
+    "Estado": "MG",
+    "Latitude": -21.7411,
+    "Longitude": -44.3117
+  },
+  {
+    "Nome": "Hospital São Vicente de Paulo",
+    "Endereço": "Rua Amazonas, nº 255 - Nova Terra",
+    "Cidade": "Araçuaí",
+    "Estado": "MG",
+    "Latitude": -16.8523,
+    "Longitude": -42.0637
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Pça. Dr. Ayres Maneira, nº 19 B - Centro",
+    "Cidade": "Araxá",
+    "Estado": "MG",
+    "Latitude": -19.5902,
+    "Longitude": -46.9438
+  },
+  {
+    "Nome": "Hospital Municipal São José",
+    "Endereço": "Rua Formiga, nº 114 - Centro",
+    "Cidade": "Arcos",
+    "Estado": "MG",
+    "Latitude": -20.2863,
+    "Longitude": -45.5373
+  },
+  {
+    "Nome": "Hospital Nossa Senhora Aparecida",
+    "Endereço": "Rua José Gomes Viana, nº 1200 - Centro",
+    "Cidade": "Arinos",
+    "Estado": "MG",
+    "Latitude": -15.9187,
+    "Longitude": -46.1043
+  },
+  {
+    "Nome": "Apromia",
+    "Endereço": "Rua Projetada, s/nº - Cidade Nova",
+    "Cidade": "Ataléia",
+    "Estado": "MG",
+    "Latitude": -18.0438,
+    "Longitude": -41.1149
+  },
+  {
+    "Nome": "Hospital Nossa Senhora do Brasil",
+    "Endereço": "Rua Dr. Mário Campos, nº 80 - Centro - CEP 38900-000",
+    "Cidade": "Bambuí",
+    "Estado": "MG",
+    "Latitude": -20.0166,
+    "Longitude": -45.9754
+  },
+  {
+    "Nome": "Unidade de Saúde de Bandeira",
+    "Endereço": "Rua Professora Arlete Campanha, nº 01",
+    "Cidade": "Bandeira",
+    "Estado": "MG",
+    "Latitude": -15.8783,
+    "Longitude": -40.5622
+  },
+  {
+    "Nome": "Hospital Regional de Barbacena José Américo",
+    "Endereço": "Av. 14 de Agosto, s/nº - Floresta",
+    "Cidade": "Barbacena",
+    "Estado": "MG",
+    "Latitude": -21.2214,
+    "Longitude": -43.7703
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Padre Toledo, s/nº - São Sebastião",
+    "Cidade": "Barbacena",
+    "Estado": "MG",
+    "Latitude": -21.2214,
+    "Longitude": -43.7703
+  },
+  {
+    "Nome": "Hospital João XXIII/FHEMIG",
+    "Endereço": "Av. Alfredo Balena, nº 400 - Santa Efigênia",
+    "Cidade": "Belo Horizonte",
+    "Estado": "MG",
+    "Latitude": -19.9102,
+    "Longitude": -43.9266
+  },
+  {
+    "Nome": "Hospital Mat. Henrique Penido",
+    "Endereço": "Praça Henrique Penido, s/nº - Carijó",
+    "Cidade": "Belo Vale",
+    "Estado": "MG",
+    "Latitude": -20.4077,
+    "Longitude": -44.0275
+  },
+  {
+    "Nome": "Hospital Municipal Nossa Senhora dos Pobres Berilo",
+    "Endereço": "Rua Padre Pedro Heredes, s/nº - São Francisco",
+    "Cidade": "Berilo",
+    "Estado": "MG",
+    "Latitude": -16.9567,
+    "Longitude": -42.4606
+  },
+  {
+    "Nome": "Unidade Atenção Primaria Saúde",
+    "Endereço": "Rua Celso Sul Ferreira, nº 40",
+    "Cidade": "Bias Fortes",
+    "Estado": "MG",
+    "Latitude": -21.602,
+    "Longitude": -43.7574
+  },
+  {
+    "Nome": "Hospital São José de Bicas",
+    "Endereço": "Rua Camilo F. Alhadas, nº 140 - Retto Júnior",
+    "Cidade": "Bicas",
+    "Estado": "MG",
+    "Latitude": -21.7232,
+    "Longitude": -43.056
+  },
+  {
+    "Nome": "Pronto Atendimento Municipal de Boa",
+    "Endereço": "Av. São Vicente de Paula, nº 107 - Alvorada",
+    "Cidade": "Boa Esperança",
+    "Estado": "MG",
+    "Latitude": -24.2467,
+    "Longitude": -52.7876
+  },
+  {
+    "Nome": "Pronto Atendimento Municipal",
+    "Endereço": "Praça Irmã Albuquerque, nº 120. CEP 35600-000",
+    "Cidade": "Bom Despacho",
+    "Estado": "MG",
+    "Latitude": -19.7386,
+    "Longitude": -45.2622
+  },
+  {
+    "Nome": "Hospital Municipal Drº Armando Ribeiro",
+    "Endereço": "Rua José Paula Nogueira, nº 3408 - Centro",
+    "Cidade": "Bom Jardim de Minas",
+    "Estado": "MG",
+    "Latitude": -21.9479,
+    "Longitude": -44.1885
+  },
+  {
+    "Nome": "Hospital São Vicente de Paulo/ AMINAS",
+    "Endereço": "Av. Vital Martins Bueno, nº 700 - Centro",
+    "Cidade": "Bom Jesus do Galho",
+    "Estado": "MG",
+    "Latitude": -19.836,
+    "Longitude": -42.3165
+  },
+  {
+    "Nome": "Asilo de Caridade Santa Casa de B S",
+    "Endereço": "Rua Dr. Aurélio Guimarães, nº 118 - Centro",
+    "Cidade": "Bom Sucesso",
+    "Estado": "MG",
+    "Latitude": -21.0329,
+    "Longitude": -44.7537
+  },
+  {
+    "Nome": "Pronto Atendimento Sinval Faria de Sá",
+    "Endereço": "Rua Lindorifo Batista, nº 2067 - Contigente",
+    "Cidade": "Brasilândia de Minas",
+    "Estado": "MG",
+    "Latitude": -16.9999,
+    "Longitude": -46.0081
+  },
+  {
+    "Nome": "Hospital Sra. Santana",
+    "Endereço": "Av. Bias Fortes, s/nº - Dona Joaquina - CEP 39930-000",
+    "Cidade": "Brasília de Minas",
+    "Estado": "MG",
+    "Latitude": -16.2104,
+    "Longitude": -44.4299
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Rua São Domingos, nº 190 - Centro",
+    "Cidade": "Buritis",
+    "Estado": "MG",
+    "Latitude": -10.1943,
+    "Longitude": -63.8324
+  },
+  {
+    "Nome": "Hospital São Lucas",
+    "Endereço": "Rua Bahia, nº 365 - Centro",
+    "Cidade": "Buritis",
+    "Estado": "MG",
+    "Latitude": -10.1943,
+    "Longitude": -63.8324
+  },
+  {
+    "Nome": "Pirapora/Buritizeiro/ Hospital Rodolfo Mallard",
+    "Endereço": "Rua Josias Carneiro, nº 531 - Centro",
+    "Cidade": "Buritizeiro",
+    "Estado": "MG",
+    "Latitude": -17.3656,
+    "Longitude": -44.9606
+  },
+  {
+    "Nome": "Hospital Dr. Otávio Gonçalves",
+    "Endereço": "Praça Rui Barbosa, nº 99 - Centro",
+    "Cidade": "Cachoeira",
+    "Estado": "MG",
+    "Latitude": -12.5994,
+    "Longitude": -38.9587
+  },
+  {
+    "Nome": "Hospital Dr. Pacífico Mascarenhas",
+    "Endereço": "Rua Coronel Victor Mascarenhas, nº 344 - Centro",
+    "Cidade": "Caetanópolis",
+    "Estado": "MG",
+    "Latitude": -19.2971,
+    "Longitude": -44.4189
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Barão Rio Branco, nº 315 - Centro",
+    "Cidade": "Caeté",
+    "Estado": "MG",
+    "Latitude": -19.8826,
+    "Longitude": -43.6704
+  },
+  {
+    "Nome": "Hospital Ana Moreira Salles",
+    "Endereço": "Rua Alcino Salomom, nº 289 - Vila São benedito",
+    "Cidade": "Cambuí",
+    "Estado": "MG",
+    "Latitude": -22.6115,
+    "Longitude": -46.0572
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Praça Nossa Sra. do Carmo, nº 135 - Centro - CEP 35534-000",
+    "Cidade": "Carmópolis de Minas",
+    "Estado": "MG",
+    "Latitude": -20.5396,
+    "Longitude": -44.6336
+  },
+  {
+    "Nome": "Sta. Casa Misericórdia e Caridade de Campestre",
+    "Endereço": "Praça Madre Luáwna, nº 60 - Centro",
+    "Cidade": "Campestre",
+    "Estado": "MG",
+    "Latitude": -21.7079,
+    "Longitude": -46.2381
+  },
+  {
+    "Nome": "Pronto Atendimento Campina Verde",
+    "Endereço": "Av. Três, nº 537 - Centro",
+    "Cidade": "Campina Verde",
+    "Estado": "MG",
+    "Latitude": -19.5382,
+    "Longitude": -49.4862
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Rua Polifeno Maia, s/nº - Centro. CEP 37270-000",
+    "Cidade": "Campo Belo",
+    "Estado": "MG",
+    "Latitude": -20.8932,
+    "Longitude": -45.2699
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Cornélia Alves Bicalho, nº 731 - Centro",
+    "Cidade": "Campos Altos",
+    "Estado": "MG",
+    "Latitude": -19.6914,
+    "Longitude": -46.1725
+  },
+  {
+    "Nome": "Hospital São Vicente de Paula",
+    "Endereço": "Av. São Vicente de Paula, s/nº - Centro",
+    "Cidade": "Campos Gerais",
+    "Estado": "MG",
+    "Latitude": -21.237,
+    "Longitude": -45.7569
+  },
+  {
+    "Nome": "Hospital Sebastião Paes Almeida",
+    "Endereço": "Rua 10, nº 874 - Centro",
+    "Cidade": "Canápolis",
+    "Estado": "MG",
+    "Latitude": -13.0725,
+    "Longitude": -44.201
+  },
+  {
+    "Nome": "Hospital Carlos Chagas",
+    "Endereço": "Av. Pedro Viêira Azevedo, nº 158 - Centro",
+    "Cidade": "Candeias",
+    "Estado": "MG",
+    "Latitude": -12.6716,
+    "Longitude": -38.5472
+  },
+  {
+    "Nome": "Hospital São Vicente de Paulo",
+    "Endereço": "Av. Juscelino kubitschek, nº 221 - Centro",
+    "Cidade": "Capelinha",
+    "Estado": "MG",
+    "Latitude": -17.6888,
+    "Longitude": -42.5147
+  },
+  {
+    "Nome": "Faepu",
+    "Endereço": "Av. 107, nº 653 - Campos Elíseos",
+    "Cidade": "Capinópolis",
+    "Estado": "MG",
+    "Latitude": -18.6862,
+    "Longitude": -49.5706
+  },
+  {
+    "Nome": "Hospital São João Batista",
+    "Endereço": "Rua Djalma Barbosa de Freitas, nº 80 - Alto Boa Vista - CEP 39810-000",
+    "Cidade": "Caraí",
+    "Estado": "MG",
+    "Latitude": -17.1862,
+    "Longitude": -41.7004
+  },
+  {
+    "Nome": "Hospital Santana de Carandai",
+    "Endereço": "Rua Coletor Clóvis Teixeira, nº 250 - Centro",
+    "Cidade": "Carandaí",
+    "Estado": "MG",
+    "Latitude": -20.9566,
+    "Longitude": -43.811
+  },
+  {
+    "Nome": "Casa de Caridade de Carangola",
+    "Endereço": "Praça Cornel João Marcelino, nº 26 - Centro",
+    "Cidade": "Carangola",
+    "Estado": "MG",
+    "Latitude": -20.7343,
+    "Longitude": -42.0313
+  },
+  {
+    "Nome": "Hospital Nossa Senhora Auxiliadora",
+    "Endereço": "Rua Dep. José Augusto Ferreira Filho, nº 89 -Centro",
+    "Cidade": "Caratinga",
+    "Estado": "MG",
+    "Latitude": -19.7868,
+    "Longitude": -42.1292
+  },
+  {
+    "Nome": "Hospital São Vicente de Paulo",
+    "Endereço": "Rua Diamantina, nº 45 - Liliane",
+    "Cidade": "Carbonita",
+    "Estado": "MG",
+    "Latitude": -17.5255,
+    "Longitude": -43.0137
+  },
+  {
+    "Nome": "Hospital Lourenço Westin",
+    "Endereço": "Rua Frei Teodoro, nº 290 - Centro",
+    "Cidade": "Carlos Chagas",
+    "Estado": "MG",
+    "Latitude": -17.6973,
+    "Longitude": -40.7723
+  },
+  {
+    "Nome": "Núcleo Municipal de Saúde",
+    "Endereço": "Rua Atanásio dos Santos, nº 271 - Centro",
+    "Cidade": "Carmo do Paranaíba",
+    "Estado": "MG",
+    "Latitude": -18.991,
+    "Longitude": -46.3167
+  },
+  {
+    "Nome": "Policlínica Munic. Dr. José Juber Ribeiro",
+    "Endereço": "Ostende Ribeiro, nº 50 - Bela Vista",
+    "Cidade": "Cataguases",
+    "Estado": "MG",
+    "Latitude": -21.3924,
+    "Longitude": -42.6896
+  },
+  {
+    "Nome": "Santa Casa",
+    "Endereço": "Av. Cel. Antônio Augusto, nº 442 - Vila Tereza",
+    "Cidade": "Cataguases",
+    "Estado": "MG",
+    "Latitude": -21.3924,
+    "Longitude": -42.6896
+  },
+  {
+    "Nome": "Hospital Jesus Menino",
+    "Endereço": "Rua Osvaldo Cruz, nº 111 - Centro",
+    "Cidade": "Central de Minas",
+    "Estado": "MG",
+    "Latitude": -18.7612,
+    "Longitude": -41.3143
+  },
+  {
+    "Nome": "Unidade Mista José Cardoso de Oliveira",
+    "Endereço": "Avenida Tancredo Neves, nº 480 - Centro",
+    "Cidade": "Chapada Gaúcha",
+    "Estado": "MG",
+    "Latitude": -15.3014,
+    "Longitude": -45.6116
+  },
+  {
+    "Nome": "Hospital São Caetano",
+    "Endereço": "Rua Francisca Pedrosa, nº 13 - Centro",
+    "Cidade": "Cipotânea",
+    "Estado": "MG",
+    "Latitude": -20.9026,
+    "Longitude": -43.3629
+  },
+  {
+    "Nome": "Hospital Municipal Agostinha Alcantra Aguiar",
+    "Endereço": "Rua São João Evangelista, nº 99 - Centro",
+    "Cidade": "Coluna",
+    "Estado": "MG",
+    "Latitude": -18.2311,
+    "Longitude": -42.8352
+  },
+  {
+    "Nome": "Unidade Básica Maria Lopes Campanha",
+    "Endereço": "Rua Pedro Pinto de Oliveira, s/nº - Centro",
+    "Cidade": "Comercinho",
+    "Estado": "MG",
+    "Latitude": -16.2963,
+    "Longitude": -41.7945
+  },
+  {
+    "Nome": "Fundação Hospitalar João Henrique",
+    "Endereço": "Rua Pedro de Lima Chagas, nº 320 - Centro",
+    "Cidade": "Conceição das Alagoas",
+    "Estado": "MG",
+    "Latitude": -19.9172,
+    "Longitude": -48.3839
+  },
+  {
+    "Nome": "Hospital Bom Jesus",
+    "Endereço": "Rua Padre Leonardo, nº 147 - Centro",
+    "Cidade": "Congonhas",
+    "Estado": "MG",
+    "Latitude": -20.4958,
+    "Longitude": -43.851
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Juquinha Mendonça, nº 319 - Centro",
+    "Cidade": "Conquista",
+    "Estado": "MG",
+    "Latitude": -19.9312,
+    "Longitude": -47.5492
+  },
+  {
+    "Nome": "Policlínica Pronto Atendimento",
+    "Endereço": "Av. Mario Rodrigues Pereira, nº 175 - Centro",
+    "Cidade": "Conselheiro Lafaiete",
+    "Estado": "MG",
+    "Latitude": -20.6634,
+    "Longitude": -43.7846
+  },
+  {
+    "Nome": "Hospital Dr. Hélcio Valentim",
+    "Endereço": "Rua Lajão, nº 39 - Centro",
+    "Cidade": "Conselheiro Pena",
+    "Estado": "MG",
+    "Latitude": -19.1789,
+    "Longitude": -41.4736
+  },
+  {
+    "Nome": "Hospital Mun. José Lucas Filho",
+    "Endereço": "Av. João César Oliveira, nº 4495 - Cinco",
+    "Cidade": "Contagem",
+    "Estado": "MG",
+    "Latitude": -19.9321,
+    "Longitude": -44.0539
+  },
+  {
+    "Nome": "Hospital Municipal São Vicente de Paula",
+    "Endereço": "Rua Gontijo Ribeiro, nº 899 - Centro",
+    "Cidade": "Coração de Jesus",
+    "Estado": "MG",
+    "Latitude": -16.6841,
+    "Longitude": -44.3635
+  },
+  {
+    "Nome": "Hospital Unimed Vale do Aço",
+    "Endereço": "Av. Rubens Siqueira Maia, nº 2030 - Santa Terezi-nha",
+    "Cidade": "Coronel Fabriciano",
+    "Estado": "MG",
+    "Latitude": -19.5179,
+    "Longitude": -42.6276
+  },
+  {
+    "Nome": "Hospital São Camilo",
+    "Endereço": "Rua Argemiro José Ribeiro, nº 206 - Santa Helena",
+    "Cidade": "Coronel Fabriciano",
+    "Estado": "MG",
+    "Latitude": -19.5179,
+    "Longitude": -42.6276
+  },
+  {
+    "Nome": "Pronto Atendimento Municipal",
+    "Endereço": "Rua Santa Cruz, nº 535 - Centro.",
+    "Cidade": "Córrego Fundo",
+    "Estado": "MG",
+    "Latitude": -20.4474,
+    "Longitude": -45.5617
+  },
+  {
+    "Nome": "Hospital Municipal de Santo Antônio",
+    "Endereço": "Rua Flávio Ferreira da Silva, nº 134 - CEP 37275-000",
+    "Cidade": "Cristais",
+    "Estado": "MG",
+    "Latitude": -20.8733,
+    "Longitude": -45.5167
+  },
+  {
+    "Nome": "Hosp. Dr. Cândido Junqueira",
+    "Endereço": "Rua Coronel Cornélio Maciel, nº 101 - Centro",
+    "Cidade": "Cruzília",
+    "Estado": "MG",
+    "Latitude": -21.84,
+    "Longitude": -44.8067
+  },
+  {
+    "Nome": "PSF Manoel Joaquim Pereira",
+    "Endereço": "Rua 13 de Maio, nº 565 - Centro",
+    "Cidade": "Cruzeiro da Fortaleza",
+    "Estado": "MG",
+    "Latitude": -18.944,
+    "Longitude": -46.6669
+  },
+  {
+    "Nome": "PS Mun. Dr. Márcio Carvalho Lopes Filho",
+    "Endereço": "Avenida Timbiras, nº 719 - Centro",
+    "Cidade": "Curvelo",
+    "Estado": "MG",
+    "Latitude": -18.7527,
+    "Longitude": -44.4303
+  },
+  {
+    "Nome": "Hospital Nossa Senhora da Saúde",
+    "Endereço": "Rua Paula Vieira, nº 564 - Centro",
+    "Cidade": "Diamantina",
+    "Estado": "MG",
+    "Latitude": -18.2413,
+    "Longitude": -43.6031
+  },
+  {
+    "Nome": "Santa Casa de Caridade de Diamantina",
+    "Endereço": "Rua da Caridade, nº 106 - Centro",
+    "Cidade": "Diamantina",
+    "Estado": "MG",
+    "Latitude": -18.2413,
+    "Longitude": -43.6031
+  },
+  {
+    "Nome": "Hospital São Sebastião de Dionísio",
+    "Endereço": "Senador Milton Campos, nº 648 -Centro",
+    "Cidade": "Dionísio",
+    "Estado": "MG",
+    "Latitude": -19.8433,
+    "Longitude": -42.7701
+  },
+  {
+    "Nome": "Hospital Municipal Divino Espírito Santo",
+    "Endereço": "Rua São Geraldo, nº 256 - Centro",
+    "Cidade": "Divino das Laranjeiras",
+    "Estado": "MG",
+    "Latitude": -18.7755,
+    "Longitude": -41.4781
+  },
+  {
+    "Nome": "Hospital Divinense",
+    "Endereço": "Rua Luiz Lourenço de Lima, nº 15",
+    "Cidade": "Divino das Laranjeiras",
+    "Estado": "MG",
+    "Latitude": -18.7755,
+    "Longitude": -41.4781
+  },
+  {
+    "Nome": "Hospital Nossa Senhora da Saúde",
+    "Endereço": "Rua Santos Tossige, nº 166 - Campestre - CEP 35440-000",
+    "Cidade": "Dom Silvério",
+    "Estado": "MG",
+    "Latitude": -20.1627,
+    "Longitude": -42.9627
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Praça Alexandre Lacerda Filho, nº 289 - Centro",
+    "Cidade": "Dores do Indaiá",
+    "Estado": "MG",
+    "Latitude": -19.4628,
+    "Longitude": -45.5927
+  },
+  {
+    "Nome": "Hospital Cassiano Campolina",
+    "Endereço": "Praça Cassiano Campolina, nº 821 - Centro",
+    "Cidade": "Entre Rios",
+    "Estado": "MG",
+    "Latitude": -11.9392,
+    "Longitude": -38.0871
+  },
+  {
+    "Nome": "Hospital de Espera Feliz",
+    "Endereço": "Rua Manuel de Moura Filho, nº 118 - Centro",
+    "Cidade": "Espera Feliz",
+    "Estado": "MG",
+    "Latitude": -20.6508,
+    "Longitude": -41.9119
+  },
+  {
+    "Nome": "Hospitalar do Município de Espinosa",
+    "Endereço": "Av. JK, nº 725 - Santa Tereza. CEP 39510-000",
+    "Cidade": "Espinosa",
+    "Estado": "MG",
+    "Latitude": -14.9249,
+    "Longitude": -42.809
+  },
+  {
+    "Nome": "P.S. Municipal Dr. Jaime Afonso de Souza",
+    "Endereço": "Rua José Mendes Pinto, nº 106 - Centro",
+    "Cidade": "Estrela Dalva",
+    "Estado": "MG",
+    "Latitude": -21.7412,
+    "Longitude": -42.4574
+  },
+  {
+    "Nome": "Centro de Saúde",
+    "Endereço": "Av. Brasil, nº 140 - Centro",
+    "Cidade": "Estrela do Indaiá",
+    "Estado": "MG",
+    "Latitude": -19.5169,
+    "Longitude": -45.7859
+  },
+  {
+    "Nome": "Pronto Socorro Municipal Prefeito Jair Apareci-do Olivotti",
+    "Endereço": "Avenida Nicolau Cesarino, nº 4000 - Bela Vista",
+    "Cidade": "Extrema",
+    "Estado": "MG",
+    "Latitude": -22.854,
+    "Longitude": -46.3178
+  },
+  {
+    "Nome": "Centro de Saúde Carlos Gualberto da Fonseca",
+    "Endereço": "Rua Jose Mauro Araújo, nº 117 - Centro",
+    "Cidade": "Felixlândia",
+    "Estado": "MG",
+    "Latitude": -18.7507,
+    "Longitude": -44.9004
+  },
+  {
+    "Nome": "Hospital Santa Bárbara",
+    "Endereço": "Rua José Henrique, nº 116 - Centro",
+    "Cidade": "Fervedouro",
+    "Estado": "MG",
+    "Latitude": -20.726,
+    "Longitude": -42.279
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Praça da Matriz, nº 45",
+    "Cidade": "Formoso",
+    "Estado": "MG",
+    "Latitude": -13.6499,
+    "Longitude": -48.8775
+  },
+  {
+    "Nome": "Hospital Municipal de Francisco Sá",
+    "Endereço": "Av. JK, nº 360 - João Gonçalves - CEP 39580-00",
+    "Cidade": "Francisco Sá",
+    "Estado": "MG",
+    "Latitude": -16.4827,
+    "Longitude": -43.4896
+  },
+  {
+    "Nome": "Hospital Municipal São Geraldo",
+    "Endereço": "Rua Venâncio Soares Souza, nº 55 - Pantanal",
+    "Cidade": "Frei Inocêncio",
+    "Estado": "MG",
+    "Latitude": -18.5556,
+    "Longitude": -41.9121
+  },
+  {
+    "Nome": "Hospital Municipal Frei Gabriel",
+    "Endereço": "Av. Brasília, nº 333 - Centro",
+    "Cidade": "Frutal",
+    "Estado": "MG",
+    "Latitude": -20.0259,
+    "Longitude": -48.9355
+  },
+  {
+    "Nome": "Hospital Imaculada Conceição",
+    "Endereço": "Rua Berilo, nº 153 - Centro",
+    "Cidade": "Galiléia",
+    "Estado": "MG",
+    "Latitude": -19.0005,
+    "Longitude": -41.5387
+  },
+  {
+    "Nome": "Hospital e Maternidade Aureliano Brandão",
+    "Endereço": "Rua Luiz Ponciano, nº 172 - Centro",
+    "Cidade": "Gouveia",
+    "Estado": "MG",
+    "Latitude": -18.4519,
+    "Longitude": -43.7423
+  },
+  {
+    "Nome": "Hospital Municipal Governador Valadares",
+    "Endereço": "Rua Teófilo Otoni, nº 361 - Centro",
+    "Cidade": "Governador Valadares",
+    "Estado": "MG",
+    "Latitude": -18.8545,
+    "Longitude": -41.9555
+  },
+  {
+    "Nome": "Fundação Santo Antônio",
+    "Endereço": "Praça São Sebastião, nº 147. CEP 39570-000",
+    "Cidade": "Grão Mogol",
+    "Estado": "MG",
+    "Latitude": -16.5662,
+    "Longitude": -42.8923
+  },
+  {
+    "Nome": "Hospital Regional Imaculada Conceição",
+    "Endereço": "Rua Capitão Bernardo, nº 257 - Centro",
+    "Cidade": "Guanhães",
+    "Estado": "MG",
+    "Latitude": -18.7713,
+    "Longitude": -42.9312
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia de Guapé",
+    "Endereço": "Rua Dr. Joaquim Coelho Filho, nº 490 - Cidade Nova",
+    "Cidade": "Guapé",
+    "Estado": "MG",
+    "Latitude": -20.7631,
+    "Longitude": -45.9152
+  },
+  {
+    "Nome": "Hospital Municipal de Guarda-Mor",
+    "Endereço": "Rua Sete Lagoas, nº 486 - Centro",
+    "Cidade": "Guarda-Mor",
+    "Estado": "MG",
+    "Latitude": -17.7673,
+    "Longitude": -47.0998
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia de Guaxupé",
+    "Endereço": "Praça Doutor Francisco Lessa, nº 162 - Centro",
+    "Cidade": "Guaxupé",
+    "Estado": "MG",
+    "Latitude": -21.305,
+    "Longitude": -46.7081
+  },
+  {
+    "Nome": "Hospital Monumento as Mães",
+    "Endereço": "Av. Minas Gerais, s/nº - Santana",
+    "Cidade": "Ibertioga",
+    "Estado": "MG",
+    "Latitude": -21.433,
+    "Longitude": -43.9639
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Pça. Padre Eustáquio, s/nº - Centro",
+    "Cidade": "Ibiá",
+    "Estado": "MG",
+    "Latitude": -19.4749,
+    "Longitude": -46.5474
+  },
+  {
+    "Nome": "Hospital Municipal São Francisco",
+    "Endereço": "Rua Quinze, nº 155 - Pio XII. CEP: 38910-000",
+    "Cidade": "Iguatama",
+    "Estado": "MG",
+    "Latitude": -20.1776,
+    "Longitude": -45.7111
+  },
+  {
+    "Nome": "Hospital São Sebastião de Inhapim",
+    "Endereço": "Rua Teófilo J. Moreira, nº 120 - Centro",
+    "Cidade": "Inhapim",
+    "Estado": "MG",
+    "Latitude": -19.5476,
+    "Longitude": -42.1147
+  },
+  {
+    "Nome": "Pronto Atendimento Municipal de Ipanema",
+    "Endereço": "Rua Tiradentes, nº 230 - Centro. Ipanema",
+    "Cidade": "Ipanema",
+    "Estado": "MG",
+    "Latitude": -19.7992,
+    "Longitude": -41.7164
+  },
+  {
+    "Nome": "Hospital Márcio Cunha",
+    "Endereço": "Av. Engº Kiyoshi Tsunawaki, s/nº - Das Águas",
+    "Cidade": "Ipatinga",
+    "Estado": "MG",
+    "Latitude": -19.4703,
+    "Longitude": -42.5476
+  },
+  {
+    "Nome": "UPA José Isabel Nascimento",
+    "Endereço": "Av. Gerasa, nº 701 - Canaã",
+    "Cidade": "Ipatinga",
+    "Estado": "MG",
+    "Latitude": -19.4703,
+    "Longitude": -42.5476
+  },
+  {
+    "Nome": "Hospital Nossa Senhora das Dores",
+    "Endereço": "Av. João Soares da Silva, nº 135 - Penha",
+    "Cidade": "Itabira",
+    "Estado": "MG",
+    "Latitude": -19.6239,
+    "Longitude": -43.2312
+  },
+  {
+    "Nome": "Hospital São Lucas de Itabirinha",
+    "Endereço": "Rua da Manoela, nº 135 - Centro",
+    "Cidade": "Itabirinha",
+    "Estado": "MG",
+    "Latitude": -18.5712,
+    "Longitude": -41.234
+  },
+  {
+    "Nome": "Hospital São Vicente de Paula",
+    "Endereço": "Rua Emídio Quites, nº 100 - Saudade",
+    "Cidade": "Itabirito",
+    "Estado": "MG",
+    "Latitude": -20.2501,
+    "Longitude": -43.8038
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Antônio P. Rezende, nº 1092 - Nogueira - CEP 35680-000",
+    "Cidade": "Itaguara",
+    "Estado": "MG",
+    "Latitude": -20.3947,
+    "Longitude": -44.4875
+  },
+  {
+    "Nome": "Hospital Nossa Sra. do Patrocínio",
+    "Endereço": "Rua João Batista, nº 55 - Centro",
+    "Cidade": "Itaipé",
+    "Estado": "MG",
+    "Latitude": -17.4014,
+    "Longitude": -41.6697
+  },
+  {
+    "Nome": "Policlínica Amilcar Pellon",
+    "Endereço": "Rua João Gomes de Lima, s/nº - São Vicente",
+    "Cidade": "Itajubá",
+    "Estado": "MG",
+    "Latitude": -22.4225,
+    "Longitude": -45.4598
+  },
+  {
+    "Nome": "Hospital Municipal Geraldo Ferreira Gandra",
+    "Endereço": "Rua Capelinha, nº 652 - Fazendinha",
+    "Cidade": "Itamarandiba",
+    "Estado": "MG",
+    "Latitude": -17.8552,
+    "Longitude": -42.8561
+  },
+  {
+    "Nome": "Hospital de Itamarandiba",
+    "Endereço": "Rua Santa Luzia, nº 40 - São Geraldo",
+    "Cidade": "Itamarandiba",
+    "Estado": "MG",
+    "Latitude": -17.8552,
+    "Longitude": -42.8561
+  },
+  {
+    "Nome": "Hospital Nossa Senhora dos Anjos",
+    "Endereço": "Av. Farmacêutico Joviano, nº 1308 -Várzea",
+    "Cidade": "Itambacuri",
+    "Estado": "MG",
+    "Latitude": -18.035,
+    "Longitude": -41.683
+  },
+  {
+    "Nome": "Hospital São Vicente de Paulo",
+    "Endereço": "Rua JK, nº 91 - Centro",
+    "Cidade": "Itanhomi",
+    "Estado": "MG",
+    "Latitude": -19.1736,
+    "Longitude": -41.863
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Avenida 17, nº 400 - Centro",
+    "Cidade": "Itapagipe",
+    "Estado": "MG",
+    "Latitude": -19.9062,
+    "Longitude": -49.3781
+  },
+  {
+    "Nome": "Unidade Pronto Atendimento Ituiutaba",
+    "Endereço": "Rua Jorge Jacob Yunes, nº 75 - Setor Norte",
+    "Cidade": "Ituiutaba",
+    "Estado": "MG",
+    "Latitude": -18.9772,
+    "Longitude": -49.4639
+  },
+  {
+    "Nome": "Ambulatório Delfina Alves Barbosa",
+    "Endereço": "Rua Cidade do Prata, nº 415 - Centro",
+    "Cidade": "Iturama",
+    "Estado": "MG",
+    "Latitude": -19.7276,
+    "Longitude": -50.1966
+  },
+  {
+    "Nome": "Hospital Municipal de Jaíba",
+    "Endereço": "Av. Joaquim Garcia Ladeia, s/nº - Centro - CEP 39508-000",
+    "Cidade": "Jaíba",
+    "Estado": "MG",
+    "Latitude": -15.3432,
+    "Longitude": -43.6688
+  },
+  {
+    "Nome": "Fundação Hospitalar de Janaúba",
+    "Endereço": "Av. Pedro Alvares Cabral, nº 140 - Veredas - CEP 39440-000",
+    "Cidade": "Janaúba",
+    "Estado": "MG",
+    "Latitude": -15.8022,
+    "Longitude": -43.3132
+  },
+  {
+    "Nome": "Hospital Municipal de Januária",
+    "Endereço": "Rua Coronel Serrão, nº 105 - Centro - CEP 39480-000",
+    "Cidade": "Januária",
+    "Estado": "MG",
+    "Latitude": -15.4802,
+    "Longitude": -44.3639
+  },
+  {
+    "Nome": "Associação Hospital Jeceaba",
+    "Endereço": "Rua Antônio Dias Leite, nº 110 - Centro",
+    "Cidade": "Jeceaba",
+    "Estado": "MG",
+    "Latitude": -20.5339,
+    "Longitude": -43.9894
+  },
+  {
+    "Nome": "Hospital Municipal Antônia Grapiuna",
+    "Endereço": "Rua Getúlio Vargas, nº 140 - Centro",
+    "Cidade": "Joaíma",
+    "Estado": "MG",
+    "Latitude": -16.6522,
+    "Longitude": -41.0229
+  },
+  {
+    "Nome": "Hospital Margarida",
+    "Endereço": "Rua Dr. Geraldo S. Sá , s/nº - Vila Tanque",
+    "Cidade": "João Monlevade",
+    "Estado": "MG",
+    "Latitude": -19.8126,
+    "Longitude": -43.1735
+  },
+  {
+    "Nome": "Hospital Municipal Antônio Carneiro Valadares",
+    "Endereço": "Rua Zico Dornelas, nº 124 - Santa Cruz",
+    "Cidade": "João Pinheiro",
+    "Estado": "MG",
+    "Latitude": -17.7398,
+    "Longitude": -46.1715
+  },
+  {
+    "Nome": "Fundação Paulo VI",
+    "Endereço": "Rua Lero Gomes, nº 483 - Centro",
+    "Cidade": "Jordânia",
+    "Estado": "MG",
+    "Latitude": -15.9009,
+    "Longitude": -40.1841
+  },
+  {
+    "Nome": "Hospital de Pronto Socorro",
+    "Endereço": "Av. Rio Branco, nº 3408 - Centro",
+    "Cidade": "Juiz de Fora",
+    "Estado": "MG",
+    "Latitude": -21.7595,
+    "Longitude": -43.3398
+  },
+  {
+    "Nome": "Hospital Mun. Dr. Arthur Rauseh",
+    "Endereço": "Rua Governador Valadares, s/nº - Centro",
+    "Cidade": "Ladainha",
+    "Estado": "MG",
+    "Latitude": -17.6279,
+    "Longitude": -41.7488
+  },
+  {
+    "Nome": "PSF Antônia Isidia",
+    "Endereço": "Rua Araguari, nº 64",
+    "Cidade": "Lagamar",
+    "Estado": "MG",
+    "Latitude": -18.1759,
+    "Longitude": -46.8063
+  },
+  {
+    "Nome": "Pronto Atendimento Municipal de Lajinha",
+    "Endereço": "Rua Orlando Francisco Misael, nº 582",
+    "Cidade": "Lajinha",
+    "Estado": "MG",
+    "Latitude": -20.1539,
+    "Longitude": -41.6228
+  },
+  {
+    "Nome": "Hosp. São Vicente",
+    "Endereço": "R. São Vicente de Paulo, nº 232 - Vila Vicentina - CEP 37370-000",
+    "Cidade": "Lambari",
+    "Estado": "MG",
+    "Latitude": -21.9671,
+    "Longitude": -45.3498
+  },
+  {
+    "Nome": "Hospital Comunitário de Laranjal",
+    "Endereço": "Rua Sebastião Soares da Silveira, s/nº - Centro",
+    "Cidade": "Laranjal",
+    "Estado": "MG",
+    "Latitude": -21.3715,
+    "Longitude": -42.4732
+  },
+  {
+    "Nome": "Unidade Reg. De Pronto Atendimento",
+    "Endereço": "Rua Ernesto Matioli, nº 885 - Santa Efigênia",
+    "Cidade": "Lavras",
+    "Estado": "MG",
+    "Latitude": -21.248,
+    "Longitude": -45.0009
+  },
+  {
+    "Nome": "Casa de Caridade Leopoldinense",
+    "Endereço": "Rua Padre Júlio, nº 138 - Centro",
+    "Cidade": "Leopoldina",
+    "Estado": "MG",
+    "Latitude": -21.5296,
+    "Longitude": -42.6421
+  },
+  {
+    "Nome": "Un. de Atenção Primária à Saúde",
+    "Endereço": "Av. Dr. José Pitágoras de Lima, nº 790 - Centro",
+    "Cidade": "Liberdade",
+    "Estado": "MG",
+    "Latitude": -22.0275,
+    "Longitude": -44.3208
+  },
+  {
+    "Nome": "Sta. Casa Lima Duarte",
+    "Endereço": "Rua Tancredo Neves, nº 263 - Centro",
+    "Cidade": "Lima Duarte",
+    "Estado": "MG",
+    "Latitude": -21.8386,
+    "Longitude": -43.7934
+  },
+  {
+    "Nome": "Hospital Nossa Senhora Aparecida",
+    "Endereço": "Av. Guarim Caetano, nº 146 - Nações - CEP 35595-000",
+    "Cidade": "Luz",
+    "Estado": "MG",
+    "Latitude": -19.7911,
+    "Longitude": -45.6794
+  },
+  {
+    "Nome": "Hospital Cura D'ars",
+    "Endereço": "Rua JK, nº 118 - Centro",
+    "Cidade": "Machacalis",
+    "Estado": "MG",
+    "Latitude": -17.0723,
+    "Longitude": -40.7245
+  },
+  {
+    "Nome": "Hospital Dr. Carlos Marx",
+    "Endereço": "Avenida JK, s/nº - Pequi",
+    "Cidade": "Malacacheta",
+    "Estado": "MG",
+    "Latitude": -17.8456,
+    "Longitude": -42.0769
+  },
+  {
+    "Nome": "Hospital Fundação Amparo ao Homem do Campo",
+    "Endereço": "Av. Tiradentes, nº 526 - Centro. CEP 39460-000",
+    "Cidade": "Manga",
+    "Estado": "MG",
+    "Latitude": -14.7529,
+    "Longitude": -43.9391
+  },
+  {
+    "Nome": "Unidade de Pronto Atendimento",
+    "Endereço": "Praça Dr. Cesar Leite, s/nº - Centro",
+    "Cidade": "Manhuaçu",
+    "Estado": "MG",
+    "Latitude": -20.2572,
+    "Longitude": -42.028
+  },
+  {
+    "Nome": "Hospital Padre Julio Maria",
+    "Endereço": "Rua Maria Olinda, nº 132",
+    "Cidade": "Manhumirim",
+    "Estado": "MG",
+    "Latitude": -20.3591,
+    "Longitude": -41.9589
+  },
+  {
+    "Nome": "Hospital São Vicente de Paulo",
+    "Endereço": "Rua Cândido Ilhéus, nº 15 - Centro",
+    "Cidade": "Mantena",
+    "Estado": "MG",
+    "Latitude": -18.7761,
+    "Longitude": -40.9874
+  },
+  {
+    "Nome": "Sta. Casa Misericórdia",
+    "Endereço": "Praça Getúlio Vargas, nº 80 - Centro",
+    "Cidade": "Mar de Espanha",
+    "Estado": "MG",
+    "Latitude": -21.8707,
+    "Longitude": -43.0062
+  },
+  {
+    "Nome": "Hospital Monsenhor Horta",
+    "Endereço": "Rua Colina de São Pedro, nº 01 - Centro",
+    "Cidade": "Mariana",
+    "Estado": "MG",
+    "Latitude": -20.3765,
+    "Longitude": -43.414
+  },
+  {
+    "Nome": "Hospital Dr. Odilon de Andrade",
+    "Endereço": "Rua Padre Marinho, nº 954 - Centro - CEP 35606-000",
+    "Cidade": "Martinho Campos",
+    "Estado": "MG",
+    "Latitude": -19.3306,
+    "Longitude": -45.2434
+  },
+  {
+    "Nome": "Unidade Básica de Saúde Mata Verde",
+    "Endereço": "Rua Tiradentes, nº 07 - Centro",
+    "Cidade": "Mata Verde",
+    "Estado": "MG",
+    "Latitude": -15.6869,
+    "Longitude": -40.7366
+  },
+  {
+    "Nome": "Pronto Atendimento Municipal",
+    "Endereço": "Rua Onofre Martins Chaves, nº 2100 - Centro",
+    "Cidade": "Matipó",
+    "Estado": "MG",
+    "Latitude": -20.2873,
+    "Longitude": -42.3401
+  },
+  {
+    "Nome": "Hospital Municipal de Mato Verde",
+    "Endereço": "Rua Mário dos Reis Silveira, nº 345 - São Bento",
+    "Cidade": "Mato Verde",
+    "Estado": "MG",
+    "Latitude": -15.3944,
+    "Longitude": -42.86
+  },
+  {
+    "Nome": "Hospital Municipal de Matutina",
+    "Endereço": "Rua Morato, nº 226 - Centro",
+    "Cidade": "Matutina",
+    "Estado": "MG",
+    "Latitude": -19.2179,
+    "Longitude": -45.9664
+  },
+  {
+    "Nome": "Fundação Hospitalar Mendes Pimentel",
+    "Endereço": "Rua Astolfo Silva, nº 59 - Centro",
+    "Cidade": "Mendes Pimentel",
+    "Estado": "MG",
+    "Latitude": -18.6631,
+    "Longitude": -41.4052
+  },
+  {
+    "Nome": "Fundação Minas Novas Hospital Doutor Badaró Junior",
+    "Endereço": "Av. Israel Pinheiro, nº 284 - Saudade",
+    "Cidade": "Minas Novas",
+    "Estado": "MG",
+    "Latitude": -17.2156,
+    "Longitude": -42.5884
+  },
+  {
+    "Nome": "Policlínica Municipal",
+    "Endereço": "Tv. João Ferreira Carvalho, nº 461 - Centro",
+    "Cidade": "Miraí",
+    "Estado": "MG",
+    "Latitude": -21.2021,
+    "Longitude": -42.6122
+  },
+  {
+    "Nome": "Hospital Professor Basílio",
+    "Endereço": "Rua Tamoios, nº 83. CEP 35604-000",
+    "Cidade": "Moema",
+    "Estado": "MG",
+    "Latitude": -19.8387,
+    "Longitude": -45.4127
+  },
+  {
+    "Nome": "Hospital Cristo Rei",
+    "Endereço": "Rua Montaigne, nº 33 - Centro",
+    "Cidade": "Montalvânia",
+    "Estado": "MG",
+    "Latitude": -14.4197,
+    "Longitude": -44.3719
+  },
+  {
+    "Nome": "Hospital e Maternidade Nossa Senhora das Graças",
+    "Endereço": "Rua Gov. Magalhães Pinto, nº 899 - São Geraldo - CEP 39500-000",
+    "Cidade": "Monte Azul",
+    "Estado": "MG",
+    "Latitude": -15.1514,
+    "Longitude": -42.8718
+  },
+  {
+    "Nome": "Pronto Atendimento de Monte Santo de Minas",
+    "Endereço": "Av. Juvenal de Magalhães Ribeiro, nº 299 -Fundos",
+    "Cidade": "Monte Santo de Minas",
+    "Estado": "MG",
+    "Latitude": -21.1873,
+    "Longitude": -46.9753
+  },
+  {
+    "Nome": "Hosp. Universitário Clemente de Faria",
+    "Endereço": "Av. Cula Mangabeira, nº 562 - Santo Expedito - CEP 39400-000",
+    "Cidade": "Montes Claros",
+    "Estado": "MG",
+    "Latitude": -16.7282,
+    "Longitude": -43.8578
+  },
+  {
+    "Nome": "Centro de Saúde Santa Luzia",
+    "Endereço": "Rua Augusto Sá, nº 459. Nossa Senhora de Santa-na. CEP 39547-000",
+    "Cidade": "Montezuma",
+    "Estado": "MG",
+    "Latitude": -15.1702,
+    "Longitude": -42.4941
+  },
+  {
+    "Nome": "Hospital e Casa de Caridade São Sebastião",
+    "Endereço": "Rua Cel. Inácio Pereira, nº 376 - Centro",
+    "Cidade": "Morada Nova de Minas",
+    "Estado": "MG",
+    "Latitude": -18.5998,
+    "Longitude": -45.3584
+  },
+  {
+    "Nome": "Hospital São Paulo",
+    "Endereço": "Rua Cel. Izalino, nº 187 - Centro",
+    "Cidade": "Muriaé",
+    "Estado": "MG",
+    "Latitude": -21.13,
+    "Longitude": -42.3693
+  },
+  {
+    "Nome": "Central de Vacinação",
+    "Endereço": "Rua Coronel Izalino, s/nº - Centro",
+    "Cidade": "Muriaé",
+    "Estado": "MG",
+    "Latitude": -21.13,
+    "Longitude": -42.3693
+  },
+  {
+    "Nome": "Hospital São Vicente de Paulo",
+    "Endereço": "Rua Luís Pascoal Borges, nº 285 - Centro",
+    "Cidade": "Mutum",
+    "Estado": "MG",
+    "Latitude": -19.8121,
+    "Longitude": -41.4407
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Rua Lambari, nº 369 - Centro",
+    "Cidade": "Nanuque",
+    "Estado": "MG",
+    "Latitude": -17.8481,
+    "Longitude": -40.3533
+  },
+  {
+    "Nome": "Centro de Saúde de Ninheira",
+    "Endereço": "Av. Domingos José de Matos, nº 518 - Centro. CEP 39553-000",
+    "Cidade": "Ninheira",
+    "Estado": "MG",
+    "Latitude": -15.3148,
+    "Longitude": -41.7564
+  },
+  {
+    "Nome": "Pronto Atendimento Municipal",
+    "Endereço": "Rua Zacarias Guimarães, nº 580 - Laranjeiras. CEP 35519-000",
+    "Cidade": "Nova Serrana",
+    "Estado": "MG",
+    "Latitude": -19.8713,
+    "Longitude": -44.9847
+  },
+  {
+    "Nome": "Hospital São Bento",
+    "Endereço": "Praça Frei Ubaldo, nº 1 - Centro",
+    "Cidade": "Novo Cruzeiro",
+    "Estado": "MG",
+    "Latitude": -17.4654,
+    "Longitude": -41.8826
+  },
+  {
+    "Nome": "Irmandade Santa Casa de Miseriórdia",
+    "Endereço": "Praça Manoelita Chagas, nº 191 - Centro. CEP 35540-000",
+    "Cidade": "Oliveira",
+    "Estado": "MG",
+    "Latitude": -20.6982,
+    "Longitude": -44.829
+  },
+  {
+    "Nome": "Hospital Raymundo Campos",
+    "Endereço": "Alto do Cruzeiro, s/nº - Centro",
+    "Cidade": "Ouro Branco",
+    "Estado": "MG",
+    "Latitude": -20.5263,
+    "Longitude": -43.6962
+  },
+  {
+    "Nome": "Pronto Atendimento Municipal",
+    "Endereço": "Rua 13 de Maio, nº 2054 - Centro",
+    "Cidade": "Ouro Fino",
+    "Estado": "MG",
+    "Latitude": -22.2779,
+    "Longitude": -46.3716
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua José de Moringa, nº 620 - Vila Itacolomi",
+    "Cidade": "Ouro Preto",
+    "Estado": "MG",
+    "Latitude": -20.3796,
+    "Longitude": -43.512
+  },
+  {
+    "Nome": "Hospital Nossa Sra. Mãe da Igreja",
+    "Endereço": "Rua Amazonas, nº 06 - Centro",
+    "Cidade": "Padre Paraíso",
+    "Estado": "MG",
+    "Latitude": -17.0758,
+    "Longitude": -41.4821
+  },
+  {
+    "Nome": "Hospital Municipal Regina Vilela",
+    "Endereço": "R. Padre José Venâncio, nº 770 - Centro",
+    "Cidade": "Pains",
+    "Estado": "MG",
+    "Latitude": -20.3705,
+    "Longitude": -45.6627
+  },
+  {
+    "Nome": "Centro De Saúde Dr. Marco A. Freitas",
+    "Endereço": "Rua Paula Freitas, nº 327 - Centro",
+    "Cidade": "Palma",
+    "Estado": "MG",
+    "Latitude": -21.3748,
+    "Longitude": -42.3123
+  },
+  {
+    "Nome": "Hospital Nossa Senhora da Conceição",
+    "Endereço": "Rua Benedito Valadares, s/nº - Centro. CEP 35600-000",
+    "Cidade": "Pará de Minas",
+    "Estado": "MG",
+    "Latitude": -19.8534,
+    "Longitude": -44.6114
+  },
+  {
+    "Nome": "Hospital Municipal de Paracatu",
+    "Endereço": "Av. Olegário Maciel, nº 714 - Centro",
+    "Cidade": "Paracatu",
+    "Estado": "MG",
+    "Latitude": -17.2252,
+    "Longitude": -46.8711
+  },
+  {
+    "Nome": "Pronto Atendimento Municipal (Pam)",
+    "Endereço": "Rua Padre Picinini, nº 528 - Centro",
+    "Cidade": "Paraguaçu",
+    "Estado": "MG",
+    "Latitude": -21.5465,
+    "Longitude": -45.7374
+  },
+  {
+    "Nome": "Hospital Frei Caetano",
+    "Endereço": "Praça Monsenhor Dutra, nº 211",
+    "Cidade": "Paraisópolis",
+    "Estado": "MG",
+    "Latitude": -22.5539,
+    "Longitude": -45.7803
+  },
+  {
+    "Nome": "Unidade Pronto Atendimento",
+    "Endereço": "Rua Barão de Passos, s/nº - Jardim Santa Luzia",
+    "Cidade": "Passos",
+    "Estado": "MG",
+    "Latitude": -20.7193,
+    "Longitude": -46.609
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Santa Casa, nº 164 - Centro",
+    "Cidade": "Passos",
+    "Estado": "MG",
+    "Latitude": -20.7193,
+    "Longitude": -46.609
+  },
+  {
+    "Nome": "Hospital Regional Antônio Dias",
+    "Endereço": "Rua Major Gote, nº 1231 - Centro",
+    "Cidade": "Patos de Minas",
+    "Estado": "MG",
+    "Latitude": -18.5699,
+    "Longitude": -46.5013
+  },
+  {
+    "Nome": "Hospital Santo Antônio",
+    "Endereço": "Rua Horácio, nº 29 - Centro",
+    "Cidade": "Peçanha",
+    "Estado": "MG",
+    "Latitude": -18.5441,
+    "Longitude": -42.5583
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Pça. Getúlio A. Honorato Borges, nº 10 - Divineia",
+    "Cidade": "Perdizes",
+    "Estado": "MG",
+    "Latitude": -19.3434,
+    "Longitude": -47.2963
+  },
+  {
+    "Nome": "Santa Casa de Perdões",
+    "Endereço": "Praça Otávio Alvarenga, nº 48 - Cruzeiro",
+    "Cidade": "Perdões",
+    "Estado": "MG",
+    "Latitude": -21.0932,
+    "Longitude": -45.0896
+  },
+  {
+    "Nome": "Santa Casa Municipal de Saúde de Pimenta",
+    "Endereço": "Rua Totonho Costa, nº 230 - Centro.",
+    "Cidade": "Pimenta",
+    "Estado": "MG",
+    "Latitude": -20.4827,
+    "Longitude": -45.8049
+  },
+  {
+    "Nome": "Hospital São Vicente",
+    "Endereço": "Rua São Sebastião, nº 257 - Centro",
+    "Cidade": "Piranga",
+    "Estado": "MG",
+    "Latitude": -20.6834,
+    "Longitude": -43.2967
+  },
+  {
+    "Nome": "Centro de Saúde",
+    "Endereço": "Rua Martins Peixoto, nº 122 - Centro",
+    "Cidade": "Pirapetinga",
+    "Estado": "MG",
+    "Latitude": -21.6554,
+    "Longitude": -42.3434
+  },
+  {
+    "Nome": "FH Dr. Moises Magalhães Freire",
+    "Endereço": "Rua Montes Claros, nº 1237 - Santo Antônio",
+    "Cidade": "Pirapora",
+    "Estado": "MG",
+    "Latitude": -17.3392,
+    "Longitude": -44.934
+  },
+  {
+    "Nome": "Pirapora/ Rede de Frio da Regional",
+    "Endereço": "Rua Rio Grande do Sul, nº 1225 - Santo Antônio",
+    "Cidade": "Pirapora",
+    "Estado": "MG",
+    "Latitude": -17.3392,
+    "Longitude": -44.934
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Praça Antônio dos Santos, nº 15 - São Francisco. CEP 35650-000",
+    "Cidade": "Pitangui",
+    "Estado": "MG",
+    "Latitude": -19.6741,
+    "Longitude": -44.8964
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia de Piumhi",
+    "Endereço": "Praça Guia Lopes, nº 53 - Centro",
+    "Cidade": "Piumhi",
+    "Estado": "MG",
+    "Latitude": -20.4762,
+    "Longitude": -45.9589
+  },
+  {
+    "Nome": "Hospital do Gimirim",
+    "Endereço": "Praça Tancredo Neves, nº 228 - Centro",
+    "Cidade": "Poço Fundo",
+    "Estado": "MG",
+    "Latitude": -21.78,
+    "Longitude": -45.9658
+  },
+  {
+    "Nome": "Unidade de Pronto Atendimento - UPA",
+    "Endereço": "Praça Bandeira do Sul, s/nº - José Carlos. CEP 37701-117",
+    "Cidade": "Poços de Caldas",
+    "Estado": "MG",
+    "Latitude": -21.78,
+    "Longitude": -46.5692
+  },
+  {
+    "Nome": "Hospital Municipal José Victor de Paula",
+    "Endereço": "Praça Leôncio de Oliveira, nº 60 - Centro",
+    "Cidade": "Pocrane",
+    "Estado": "MG",
+    "Latitude": -19.6208,
+    "Longitude": -41.6334
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia de Pompeu",
+    "Endereço": "Rua João Machado, nº 161 - Centro",
+    "Cidade": "Pompéu",
+    "Estado": "MG",
+    "Latitude": -19.2257,
+    "Longitude": -45.0141
+  },
+  {
+    "Nome": "Hospital Nossa Senhora das Dores",
+    "Endereço": "Rua Dr. Leonardo, nº 200 Centro. CEP 35430-004",
+    "Cidade": "Ponte Nova",
+    "Estado": "MG",
+    "Latitude": -20.4111,
+    "Longitude": -42.8978
+  },
+  {
+    "Nome": "Hospital Arnaldo Gavazza",
+    "Endereço": "Av. Dr. José Grossi, nº 16 - Guarapiranga",
+    "Cidade": "Ponte Nova",
+    "Estado": "MG",
+    "Latitude": -20.4111,
+    "Longitude": -42.8978
+  },
+  {
+    "Nome": "Centro de Saúde Marcos Robério Martins",
+    "Endereço": "Praça Jason Mendes Batista, nº 200 - Ouro Branco",
+    "Cidade": "Porteirinha",
+    "Estado": "MG",
+    "Latitude": -15.7404,
+    "Longitude": -43.0281
+  },
+  {
+    "Nome": "Hospital São Vicente de Paulo",
+    "Endereço": "Rua Militão Maia, nº 237 - Centro",
+    "Cidade": "Poté",
+    "Estado": "MG",
+    "Latitude": -17.8077,
+    "Longitude": -41.786
+  },
+  {
+    "Nome": "Hospital Samuel Libânio",
+    "Endereço": "Rua Comendador José Garcia, nº 777 - Nossa Senhora Aparecida",
+    "Cidade": "Pouso Alegre",
+    "Estado": "MG",
+    "Latitude": -22.2266,
+    "Longitude": -45.9389
+  },
+  {
+    "Nome": "Hospital M. Santo Antônio",
+    "Endereço": "Av. Juca Quintão, nº 82 - Bela Vista",
+    "Cidade": "Presidente Bernardes",
+    "Estado": "MG",
+    "Latitude": -22.0082,
+    "Longitude": -51.5565
+  },
+  {
+    "Nome": "Hospital Municipal Darci José Fernandes",
+    "Endereço": "Praça José Batista Marra, s/nº - Centro",
+    "Cidade": "Presidente Olegário",
+    "Estado": "MG",
+    "Latitude": -18.4096,
+    "Longitude": -46.4165
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Rua Cel. José Maria Cardoso, s/nº",
+    "Cidade": "Recreio",
+    "Estado": "MG",
+    "Latitude": -21.5289,
+    "Longitude": -42.4676
+  },
+  {
+    "Nome": "Hospital Nossa Sra. Carmo",
+    "Endereço": "Rua Moraes de Carvalho, nº 333 - Centro",
+    "Cidade": "Resplendor",
+    "Estado": "MG",
+    "Latitude": -19.3194,
+    "Longitude": -41.2462
+  },
+  {
+    "Nome": "Hospital Hosmater",
+    "Endereço": "Praça da Piedade, nº 36 - Centro",
+    "Cidade": "Rio Espera",
+    "Estado": "MG",
+    "Latitude": -20.855,
+    "Longitude": -43.4721
+  },
+  {
+    "Nome": "Sta. Casa Misericórdia",
+    "Endereço": "Av. Getúlio Vargas, nº 304 - Centro",
+    "Cidade": "Rio Novo",
+    "Estado": "MG",
+    "Latitude": -21.4649,
+    "Longitude": -43.1168
+  },
+  {
+    "Nome": "Hospital Municipal Dona Maria Conceição Frantino Valério",
+    "Endereço": "Av. Trajano José Da Silva, nº 98 - Centro",
+    "Cidade": "Rio Paranaíba",
+    "Estado": "MG",
+    "Latitude": -19.1861,
+    "Longitude": -46.2455
+  },
+  {
+    "Nome": "Hospital Tácito de Freitas Costa (Fundação",
+    "Endereço": "Praça Antônio Neves, nº 324. Cidade Alta - CEP 39530-000",
+    "Cidade": "Rio Pardo",
+    "Estado": "MG",
+    "Latitude": -29.988,
+    "Longitude": -52.3711
+  },
+  {
+    "Nome": "Sta. Casa Misericórdia",
+    "Endereço": "Rua Dr. Esperidião, nº 273 - Centro",
+    "Cidade": "Rio Preto",
+    "Estado": "MG",
+    "Latitude": -22.0861,
+    "Longitude": -43.8293
+  },
+  {
+    "Nome": "Hospital João Cesar de Oliveira",
+    "Endereço": "Travessa Francisco da Rocha, nº 34 - Centro",
+    "Cidade": "Rio Vermelho",
+    "Estado": "MG",
+    "Latitude": -18.2922,
+    "Longitude": -43.0018
+  },
+  {
+    "Nome": "Hospital São Vicente de Paulo",
+    "Endereço": "Rua Borborema, nº 477 - Centro",
+    "Cidade": "Rubim",
+    "Estado": "MG",
+    "Latitude": -16.3775,
+    "Longitude": -40.5397
+  },
+  {
+    "Nome": "Hospital São Sebastião de Sabinópolis",
+    "Endereço": "Rua Inácio Barroso, nº 331 - Centro",
+    "Cidade": "Sabinópolis",
+    "Estado": "MG",
+    "Latitude": -18.6653,
+    "Longitude": -43.0752
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Pça. Cônego Hermogenes, nº 2 - Centro",
+    "Cidade": "Sacramento",
+    "Estado": "MG",
+    "Latitude": -19.8622,
+    "Longitude": -47.4508
+  },
+  {
+    "Nome": "Hospital Municipal Doutor Osvaldo Prediliano Santana",
+    "Endereço": "Av. Antônio Carlos, nº 1009 - São Geraldo - CEP 39560-000",
+    "Cidade": "Salinas",
+    "Estado": "MG",
+    "Latitude": -16.1753,
+    "Longitude": -42.2964
+  },
+  {
+    "Nome": "Hospital Municipal Santa Juliana",
+    "Endereço": "Rua São Vicente de Paula, nº 55 - Centro",
+    "Cidade": "Santa Juliana",
+    "Estado": "MG",
+    "Latitude": -19.3108,
+    "Longitude": -47.5322
+  },
+  {
+    "Nome": "Hospital Dr. Jatyr Guimarães de Paula",
+    "Endereço": "Praça Celestino Pereira Lima, nº 102 - Centro",
+    "Cidade": "Santa Margarida",
+    "Estado": "MG",
+    "Latitude": -20.3839,
+    "Longitude": -42.2519
+  },
+  {
+    "Nome": "Hospital Santa Maria Eterna",
+    "Endereço": "Praça Batista Lopes, nº 40 - Centro",
+    "Cidade": "Santa Maria do Suaçuí",
+    "Estado": "MG",
+    "Latitude": -18.1896,
+    "Longitude": -42.4139
+  },
+  {
+    "Nome": "Sta. Casa Misericórdia",
+    "Endereço": "Rua Getúlio Vargas, s/nº",
+    "Cidade": "Santa Rita de Jacutinga",
+    "Estado": "MG",
+    "Latitude": -22.1474,
+    "Longitude": -44.0977
+  },
+  {
+    "Nome": "Unidade Mista Jerônimo Teodoro",
+    "Endereço": "Av. Joaquim Ribeiro de Gouveia, nº 1507 - Centro",
+    "Cidade": "Santa Vitória",
+    "Estado": "MG",
+    "Latitude": -18.8414,
+    "Longitude": -50.1208
+  },
+  {
+    "Nome": "Hospital Regional São Sebastião",
+    "Endereço": "Rua Antero Aguiar, nº 96 - Centro. CEP 37262-000",
+    "Cidade": "Santo Antônio do Amparo",
+    "Estado": "MG",
+    "Latitude": -20.943,
+    "Longitude": -44.9176
+  },
+  {
+    "Nome": "PAM - Municipal",
+    "Endereço": "R. Cel. José Luís Gonçalves Sobrinho, nº 4",
+    "Cidade": "Santo Antônio do Monte",
+    "Estado": "MG",
+    "Latitude": -20.085,
+    "Longitude": -45.2947
+  },
+  {
+    "Nome": "Unidade Básica de Saúde de Santo Antônio do Jacinto",
+    "Endereço": "Rua Beira Rio, nº 354 - Centro",
+    "Cidade": "Santo Antônio do Jacinto",
+    "Estado": "MG",
+    "Latitude": -16.5332,
+    "Longitude": -40.1817
+  },
+  {
+    "Nome": "Hospital de Misericórdia",
+    "Endereço": "Rua Vieira Braga, nº 01 - Centro",
+    "Cidade": "Santos Dumont",
+    "Estado": "MG",
+    "Latitude": -21.4634,
+    "Longitude": -43.5499
+  },
+  {
+    "Nome": "Hospital Brício Dourado",
+    "Endereço": "Av. Dom Pedro de Alcantra, nº 626 - Centro - CEP 39300-000",
+    "Cidade": "São Francisco",
+    "Estado": "MG",
+    "Latitude": -20.3623,
+    "Longitude": -50.6952
+  },
+  {
+    "Nome": "Hospital Municipal de São Gotardo",
+    "Endereço": "Av. Rio Branco, nº 147 - Centro",
+    "Cidade": "São Gotardo",
+    "Estado": "MG",
+    "Latitude": -19.3087,
+    "Longitude": -46.0465
+  },
+  {
+    "Nome": "Hospital São Geraldo",
+    "Endereço": "Rua Rufino Cardoso, nº 381 - Centro",
+    "Cidade": "São João da Ponte",
+    "Estado": "MG",
+    "Latitude": -15.9271,
+    "Longitude": -44.0096
+  },
+  {
+    "Nome": "UPA São João del Rei",
+    "Endereço": "Rua Marechal Ciro Espírito Santo Cardoso, nº 74 -Jardim Central",
+    "Cidade": "São João del Rei",
+    "Estado": "MG",
+    "Latitude": -21.1311,
+    "Longitude": -44.2526
+  },
+  {
+    "Nome": "Fundação de Saúde São João do Paraíso",
+    "Endereço": "Rua Sebastião da Costa Ferreira, s/nº - Centro - CEP 39540-000",
+    "Cidade": "São João do Paraíso",
+    "Estado": "MG",
+    "Latitude": -15.3168,
+    "Longitude": -42.0213
+  },
+  {
+    "Nome": "Hospital Municipal de São João Evangelista",
+    "Endereço": "Rua Josefina Pimenta, nº 274 - Centro",
+    "Cidade": "São João Evangelista",
+    "Estado": "MG",
+    "Latitude": -18.548,
+    "Longitude": -42.7655
+  },
+  {
+    "Nome": "Pronto Atendimento Médico",
+    "Endereço": "Rua Dr. Gouvêia, s/nº",
+    "Cidade": "São João Nepomuceno",
+    "Estado": "MG",
+    "Latitude": -21.5381,
+    "Longitude": -43.0069
+  },
+  {
+    "Nome": "PSF Maria Ribeiro Figueiredo",
+    "Endereço": "Rua Senhora Aparecida, nº 43 - Centro",
+    "Cidade": "São José da Safira",
+    "Estado": "MG",
+    "Latitude": -18.3243,
+    "Longitude": -42.1431
+  },
+  {
+    "Nome": "UPA - Jurandir Martins Guimarães",
+    "Endereço": "Rua Mário Rolla, nº 109 - Centro. CEP 35986-000",
+    "Cidade": "São José do Goiabal",
+    "Estado": "MG",
+    "Latitude": -19.9214,
+    "Longitude": -42.7035
+  },
+  {
+    "Nome": "Hosp. Fundação Casa de Caridade",
+    "Endereço": "Rua Ida Mascarenhas Laje, nº 310 - Nossa Senho-ra de Fátima",
+    "Cidade": "São Lourenço",
+    "Estado": "MG",
+    "Latitude": -22.1166,
+    "Longitude": -45.0506
+  },
+  {
+    "Nome": "Fundação Assistencial Manoel Simões Cachito",
+    "Endereço": "Av. Milton Gonsalves Pereira, nº 351 - Centro",
+    "Cidade": "São Romão",
+    "Estado": "MG",
+    "Latitude": -16.3641,
+    "Longitude": -45.0749
+  },
+  {
+    "Nome": "Hospital Municipal de Serra do Salitre",
+    "Endereço": "Rua Austrália, nº 419 - Nações. Serra do Salitre",
+    "Cidade": "Serra do Salitre",
+    "Estado": "MG",
+    "Latitude": -19.1083,
+    "Longitude": -46.6961
+  },
+  {
+    "Nome": "Casa de Caridade Santa Casa",
+    "Endereço": "Rua Irmã Maria Carvalho, nº 68 - Matozinhos",
+    "Cidade": "Serro",
+    "Estado": "MG",
+    "Latitude": -18.5991,
+    "Longitude": -43.3744
+  },
+  {
+    "Nome": "Hospital Monsenhor Flávio D'amato",
+    "Endereço": "Av. Raquel Teixeira Viana, nº 716",
+    "Cidade": "Sete Lagoas",
+    "Estado": "MG",
+    "Latitude": -19.4569,
+    "Longitude": -44.2413
+  },
+  {
+    "Nome": "Pronto Atendimento Juvelino da Terra Pereira",
+    "Endereço": "Rua Francisco Lúcio de Assis, s/nº",
+    "Cidade": "Simonésia",
+    "Estado": "MG",
+    "Latitude": -20.1341,
+    "Longitude": -42.0091
+  },
+  {
+    "Nome": "Hospital Santo Antônio",
+    "Endereço": "Rua Grão Mogol, nº 194 - Centro. CEP 39550-00",
+    "Cidade": "Taiobeiras",
+    "Estado": "MG",
+    "Latitude": -15.8106,
+    "Longitude": -42.2259
+  },
+  {
+    "Nome": "Hospital São Sebastião de Tarumirim",
+    "Endereço": "Rua Manoel Joaquim de Andrade, nº 301 - Centro",
+    "Cidade": "Tarumirim",
+    "Estado": "MG",
+    "Latitude": -19.2835,
+    "Longitude": -42.0097
+  },
+  {
+    "Nome": "UPA",
+    "Endereço": "Avenida Getúlio Vargas, nº 1284 - Centro",
+    "Cidade": "Teófilo Otoni",
+    "Estado": "MG",
+    "Latitude": -17.8595,
+    "Longitude": -41.5087
+  },
+  {
+    "Nome": "Hospital Vital Brasil",
+    "Endereço": "Rua José Júlio Lage, s/nº - Timirim",
+    "Cidade": "Timóteo",
+    "Estado": "MG",
+    "Latitude": -19.5811,
+    "Longitude": -42.6471
+  },
+  {
+    "Nome": "Hospital Municipal Conceição Palhares",
+    "Endereço": "Av. Antônio Carlos, nº 372 - Centro",
+    "Cidade": "Tiros",
+    "Estado": "MG",
+    "Latitude": -19.0037,
+    "Longitude": -45.9626
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Av. Imaculada Conceição, nº 310 - Quebra Copos - CEP 36844-000",
+    "Cidade": "Tombos",
+    "Estado": "MG",
+    "Latitude": -20.9086,
+    "Longitude": -42.0228
+  },
+  {
+    "Nome": "Hosp. São Sebastião",
+    "Endereço": "Rua Pedro Bonésio, nº 236 - Centro",
+    "Cidade": "Três Corações",
+    "Estado": "MG",
+    "Latitude": -21.6921,
+    "Longitude": -45.2511
+  },
+  {
+    "Nome": "Hospital São Francisco",
+    "Endereço": "BR - 040 - Km 438",
+    "Cidade": "Três Marias",
+    "Estado": "MG",
+    "Latitude": -18.2048,
+    "Longitude": -45.2473
+  },
+  {
+    "Nome": "Pronto Atendimento Municipal",
+    "Endereço": "Rua Barão da Boa Esperança, nº 484 - Vicentini",
+    "Cidade": "Três Pontas",
+    "Estado": "MG",
+    "Latitude": -21.3694,
+    "Longitude": -45.5109
+  },
+  {
+    "Nome": "Centro Municipal de Saúde",
+    "Endereço": "Praça Tiradentes. nº 58 - Centro",
+    "Cidade": "Tumiritinga",
+    "Estado": "MG",
+    "Latitude": -18.9844,
+    "Longitude": -41.6527
+  },
+  {
+    "Nome": "Hospital São Vicente",
+    "Endereço": "Rua do Rosário, nº 440 - Caxambu",
+    "Cidade": "Turmalina",
+    "Estado": "MG",
+    "Latitude": -20.0486,
+    "Longitude": -50.4792
+  },
+  {
+    "Nome": "HC - UFTM",
+    "Endereço": "Av. Getúlio Guaritá, s/nº - Mercês",
+    "Cidade": "Uberaba",
+    "Estado": "MG",
+    "Latitude": -19.7472,
+    "Longitude": -47.9381
+  },
+  {
+    "Nome": "PS da FAEPU",
+    "Endereço": "Av. Pará, nº 1720 - Unuarama",
+    "Cidade": "Uberlândia",
+    "Estado": "MG",
+    "Latitude": -18.9141,
+    "Longitude": -48.2749
+  },
+  {
+    "Nome": "UAI Pampulha",
+    "Endereço": "Av. João Naves de Ávila, nº 4920 - Carajás",
+    "Cidade": "Uberlândia",
+    "Estado": "MG",
+    "Latitude": -18.9141,
+    "Longitude": -48.2749
+  },
+  {
+    "Nome": "Hospital Municipal Dr. Joaquim Brochado",
+    "Endereço": "Rua Virgílio Justiniano Ribeiro, nº 1585 - Barroca -CEP 38610-000",
+    "Cidade": "Unaí",
+    "Estado": "MG",
+    "Latitude": -16.3592,
+    "Longitude": -46.9022
+  },
+  {
+    "Nome": "Hospital Municipal Gricia Lisbioa Resende",
+    "Endereço": "Av. Américo Martins, nº 45 - Rutilante.",
+    "Cidade": "Urucuia",
+    "Estado": "MG",
+    "Latitude": -16.1244,
+    "Longitude": -45.7352
+  },
+  {
+    "Nome": "Hospital Municipal Nossa Senhora da Lapa",
+    "Endereço": "Rua Done Isaura, nº 350 - Centro",
+    "Cidade": "Vazante",
+    "Estado": "MG",
+    "Latitude": -17.9827,
+    "Longitude": -46.9088
+  },
+  {
+    "Nome": "Hospital Municipal de Várzea da Palma",
+    "Endereço": "Rua Reinaldo Rodrigues dos Santos, nº 305 A -Planalto",
+    "Cidade": "Várzea da Palma",
+    "Estado": "MG",
+    "Latitude": -17.5944,
+    "Longitude": -44.7226
+  },
+  {
+    "Nome": "Hospital São João Batista",
+    "Endereço": "Rua dos Passos, nº 1000 - Nova Era - CEP 36570-000",
+    "Cidade": "Viçosa",
+    "Estado": "MG",
+    "Latitude": -5.98253,
+    "Longitude": -37.9462
+  },
+  {
+    "Nome": "Hospital São Domingos",
+    "Endereço": "Praça Minas Gerais, nº 85 - Novo Horizonte",
+    "Cidade": "Virgem da Lapa",
+    "Estado": "MG",
+    "Latitude": -16.807,
+    "Longitude": -42.3431
+  },
+  {
+    "Nome": "Hospital Irene Tavares Rocha",
+    "Endereço": "Alameda Padre Sebastião Carlos Pogianella, nº 38 - centro",
+    "Cidade": "Volta Grande",
+    "Estado": "MG",
+    "Latitude": -21.7671,
+    "Longitude": -42.5375
+  },
+  {
+    "Nome": "Hospital de Praia Brava",
+    "Endereço": "Rod. Gov. Mário Covas, Br 101 Km 524 Rua 8, s/nº  - Praia Brava",
+    "Cidade": "Angra dos Reis",
+    "Estado": "RJ",
+    "Latitude": -23.0011,
+    "Longitude": -44.3196
+  },
+  {
+    "Nome": "Hospital Geral de Japuiba",
+    "Endereço": "Rua Japoranga 1.700 - Japuiba",
+    "Cidade": "Angra dos Reis",
+    "Estado": "RJ",
+    "Latitude": -23.0011,
+    "Longitude": -44.3196
+  },
+  {
+    "Nome": "Hospital Municipal Pref. Armando Silva Carva-lho",
+    "Endereço": "Rua Eduardo Américo da Costa, Vicente",
+    "Cidade": "Araruama",
+    "Estado": "RJ",
+    "Latitude": -22.8697,
+    "Longitude": -42.3326
+  },
+  {
+    "Nome": "Hospital Ferreira Machado",
+    "Endereço": "Rua Rocha Leão, nº 2 - Caju",
+    "Cidade": "Campos dos Goytacazes",
+    "Estado": "RJ",
+    "Latitude": -21.7622,
+    "Longitude": -41.3181
+  },
+  {
+    "Nome": "Hospital Municipal Ângela Maria Simões Mene-zes",
+    "Endereço": "Rua Pastor Luis Laurentino, nº 1292 - Santa Ely",
+    "Cidade": "Casimiro de Abreu",
+    "Estado": "RJ",
+    "Latitude": -22.4812,
+    "Longitude": -42.2066
+  },
+  {
+    "Nome": "Hospital Municipal Des. Leal Júnior",
+    "Endereço": "Avenida Prefeito Álvares de Carvalho Júnior, Nancilândia",
+    "Cidade": "Itaboraí",
+    "Estado": "RJ",
+    "Latitude": -22.7565,
+    "Longitude": -42.8639
+  },
+  {
+    "Nome": "Posto de Urgência",
+    "Endereço": "Rua Satiro Garibaldi, nº 171 - Centro",
+    "Cidade": "Itaperuna",
+    "Estado": "RJ",
+    "Latitude": -21.1997,
+    "Longitude": -41.8799
+  },
+  {
+    "Nome": "Hospital Público Municipal da Serra Evangelina Flores da Silva",
+    "Endereço": "Rua João Manoel da Silva,",
+    "Cidade": "Macaé",
+    "Estado": "RJ",
+    "Latitude": -22.3768,
+    "Longitude": -41.7848
+  },
+  {
+    "Nome": "Hospital Municipal Victor de Souza Breves",
+    "Endereço": "Avenida Nilo Peçanha, nº 85 -",
+    "Cidade": "Mangaratiba",
+    "Estado": "RJ",
+    "Latitude": -22.9594,
+    "Longitude": -44.0409
+  },
+  {
+    "Nome": "Hospital Universitário Antônio Pedro",
+    "Endereço": "Rua Marquês de Paraná, nº 303 - Centro",
+    "Cidade": "Niterói",
+    "Estado": "RJ",
+    "Latitude": -22.8832,
+    "Longitude": -43.1034
+  },
+  {
+    "Nome": "Hospital Municipal Raul Sertã",
+    "Endereço": "Rua General Osório, nº 324 - Centro",
+    "Cidade": "Nova Friburgo",
+    "Estado": "RJ",
+    "Latitude": -22.2932,
+    "Longitude": -42.5377
+  },
+  {
+    "Nome": "Hospital Geral de Nova Iguaçu",
+    "Endereço": "Avenida Henrique Duque Estrada Mayer, nº 953 -Posse",
+    "Cidade": "Nova Iguaçu",
+    "Estado": "RJ",
+    "Latitude": -22.7556,
+    "Longitude": -43.4603
+  },
+  {
+    "Nome": "Hospital Municipal São Pedro de Alcântara",
+    "Endereço": "Avenida São Pedro de Alcântara,",
+    "Cidade": "Paraty",
+    "Estado": "RJ",
+    "Latitude": -23.2221,
+    "Longitude": -44.7175
+  },
+  {
+    "Nome": "UPA Centro",
+    "Endereço": "Rua Washington Luiz, nº 600 - Centro",
+    "Cidade": "Petrópolis",
+    "Estado": "RJ",
+    "Latitude": -22.52,
+    "Longitude": -43.1926
+  },
+  {
+    "Nome": "Hospital Regional Darcy Vargas",
+    "Endereço": "Rua João Carmo, nº 110 - Centro",
+    "Cidade": "Rio Bonito",
+    "Estado": "RJ",
+    "Latitude": -22.7181,
+    "Longitude": -42.6276
+  },
+  {
+    "Nome": "Hospital Municipal Lourenço Jorge",
+    "Endereço": "Avenida Ayrton Senna, nº 2000 - Barra da Tijuca",
+    "Cidade": "Rio de Janeiro",
+    "Estado": "RJ",
+    "Latitude": -22.9129,
+    "Longitude": -43.2003
+  },
+  {
+    "Nome": "Hospital Pedro II",
+    "Endereço": "Rua do Prado, nº 325",
+    "Cidade": "Rio de Janeiro",
+    "Estado": "RJ",
+    "Latitude": -22.9129,
+    "Longitude": -43.2003
+  },
+  {
+    "Nome": "Hospital de Clínica Constantino Ottaviano",
+    "Endereço": "Rua Delfim Moreira, nº 2211 - Vale Paraíso",
+    "Cidade": "Teresópolis",
+    "Estado": "RJ",
+    "Latitude": -22.4165,
+    "Longitude": -42.9752
+  },
+  {
+    "Nome": "Hospital de Clinicas Nossa Senhora da Concei-ção",
+    "Endereço": "Rua Maestro Costa Barros, nº 642 - Centro",
+    "Cidade": "Três Rios",
+    "Estado": "RJ",
+    "Latitude": -22.1165,
+    "Longitude": -43.2185
+  },
+  {
+    "Nome": "UPA 31",
+    "Endereço": "Avenida Zoelo Solla, nº 2100 - Triângulo",
+    "Cidade": "Três Rios",
+    "Estado": "RJ",
+    "Latitude": -22.1165,
+    "Longitude": -43.2185
+  },
+  {
+    "Nome": "Hospital Escola Luis Gioseffi Jannuzzi",
+    "Endereço": "Rua Dom José Costa Campos, nº 20",
+    "Cidade": "Valença",
+    "Estado": "RJ",
+    "Latitude": -13.3669,
+    "Longitude": -39.073
+  },
+  {
+    "Nome": "Hospital Universitário Sul Fluminense",
+    "Endereço": "Rua Vicente Celestino, nº 201 - Madruga",
+    "Cidade": "Vassouras",
+    "Estado": "RJ",
+    "Latitude": -22.4059,
+    "Longitude": -43.6686
+  },
+  {
+    "Nome": "Centro de Assistência Intermediária de Saúde (CAIS)",
+    "Endereço": "Rua Governador Luiz Monteiro Portela, nº 298 - Aterrado",
+    "Cidade": "Volta Redonda",
+    "Estado": "RJ",
+    "Latitude": -22.5202,
+    "Longitude": -44.0996
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Joaquim Vian, nº 209",
+    "Cidade": "Adamantina",
+    "Estado": "SP",
+    "Latitude": -21.682,
+    "Longitude": -51.0737
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Alexandrino de Alencar, nº 37",
+    "Cidade": "Aguaí",
+    "Estado": "SP",
+    "Latitude": -22.0572,
+    "Longitude": -46.9735
+  },
+  {
+    "Nome": "Hospital Geral Dr. Francisco Tozzi",
+    "Endereço": "Rua Santa Catarina, nº 158",
+    "Cidade": "Águas de Lindóia",
+    "Estado": "SP",
+    "Latitude": -22.4733,
+    "Longitude": -46.6314
+  },
+  {
+    "Nome": "C.S. II",
+    "Endereço": "Rua Campos Sales, nº 365",
+    "Cidade": "Altinópolis",
+    "Estado": "SP",
+    "Latitude": -21.0214,
+    "Longitude": -47.3712
+  },
+  {
+    "Nome": "Hospital Municipal",
+    "Endereço": "Av. da Saúde, nº 415",
+    "Cidade": "Americana",
+    "Estado": "SP",
+    "Latitude": -22.7374,
+    "Longitude": -47.3331
+  },
+  {
+    "Nome": "Santa Casa Anna Cintra",
+    "Endereço": "Rua Anna Cintra, nº 332",
+    "Cidade": "Amparo",
+    "Estado": "SP",
+    "Latitude": -7.55502,
+    "Longitude": -37.0628
+  },
+  {
+    "Nome": "Santa Casa de Andradina",
+    "Endereço": "Av. Guanabara, nº 730",
+    "Cidade": "Andradina",
+    "Estado": "SP",
+    "Latitude": -20.8948,
+    "Longitude": -51.3786
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua José Franco de Araújo, nº 1020 - Centro",
+    "Cidade": "Angatuba",
+    "Estado": "SP",
+    "Latitude": -23.4917,
+    "Longitude": -48.4139
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Barão do Rio Branco, nº 470 - Centro",
+    "Cidade": "Aparecida",
+    "Estado": "SP",
+    "Latitude": -6.78466,
+    "Longitude": -38.0803
+  },
+  {
+    "Nome": "Santa Casa de Apiaí",
+    "Endereço": "Rua 1º de Maio, nº 336",
+    "Cidade": "Apiaí",
+    "Estado": "SP",
+    "Latitude": -24.5108,
+    "Longitude": -48.8443
+  },
+  {
+    "Nome": "Santa Casa de Araçatuba",
+    "Endereço": "Rua Floriano Peixoto, nº 896 - Vila Mendonça",
+    "Cidade": "Araçatuba",
+    "Estado": "SP",
+    "Latitude": -21.2076,
+    "Longitude": -50.4401
+  },
+  {
+    "Nome": "Pronto Socorro",
+    "Endereço": "Av. Heitor Min, nº 90 - V. Melhado",
+    "Cidade": "Araraquara",
+    "Estado": "SP",
+    "Latitude": -21.7845,
+    "Longitude": -48.178
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Praça Dr. Narciso Gomes, nº 49",
+    "Cidade": "Araras",
+    "Estado": "SP",
+    "Latitude": -22.3572,
+    "Longitude": -47.3842
+  },
+  {
+    "Nome": "Pronto Socorro Municipal de Assis",
+    "Endereço": "Rua Smith Vasconcelos, Av. Rui Barbosa, Rua Manoel de Oliveira, s/nº - Centro",
+    "Cidade": "Assis",
+    "Estado": "SP",
+    "Latitude": -22.66,
+    "Longitude": -50.4183
+  },
+  {
+    "Nome": "Hosp. Maternidade São José (Santa Casa)",
+    "Endereço": "Praça Dr. Miguel Vairo, nº 104",
+    "Cidade": "Atibaia",
+    "Estado": "SP",
+    "Latitude": -23.1171,
+    "Longitude": -46.5563
+  },
+  {
+    "Nome": "Santa Casa de Auriflama",
+    "Endereço": "Rua Alfredo Dainesi, nº 59-52",
+    "Cidade": "Auriflama",
+    "Estado": "SP",
+    "Latitude": -20.6836,
+    "Longitude": -50.5572
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Paraíba, nº 1003 - Centro",
+    "Cidade": "Avaré",
+    "Estado": "SP",
+    "Latitude": -23.1067,
+    "Longitude": -48.9251
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Av. Bom Jesus, nº 134 - Centro",
+    "Cidade": "Bananal",
+    "Estado": "SP",
+    "Latitude": -22.6819,
+    "Longitude": -44.3281
+  },
+  {
+    "Nome": "Pronto Atendimento",
+    "Endereço": "Vereador Firmino Pedroso dos Santos, nº 375",
+    "Cidade": "Barra do Turvo",
+    "Estado": "SP",
+    "Latitude": -24.759,
+    "Longitude": -48.5013
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia de Barretos",
+    "Endereço": "Av. 23, nº 1208",
+    "Cidade": "Barretos",
+    "Estado": "SP",
+    "Latitude": -20.5531,
+    "Longitude": -48.5698
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Rua Santoshi Nagahasi, nº 800",
+    "Cidade": "Bastos",
+    "Estado": "SP",
+    "Latitude": -21.921,
+    "Longitude": -50.7357
+  },
+  {
+    "Nome": "Pronto Socorro Municipal de Bauru",
+    "Endereço": "Rua Rubens Arruda, Qd.07",
+    "Cidade": "Bauru",
+    "Estado": "SP",
+    "Latitude": -22.3246,
+    "Longitude": -49.0871
+  },
+  {
+    "Nome": "Hospital Municipal Bebedouro",
+    "Endereço": "Av. Raul Furquim, nº 2010",
+    "Cidade": "Bebedouro",
+    "Estado": "SP",
+    "Latitude": -20.9491,
+    "Longitude": -48.4791
+  },
+  {
+    "Nome": "Hospital M. Bertioga",
+    "Endereço": "Pça. Vicente Molinari,",
+    "Cidade": "Bertioga",
+    "Estado": "SP",
+    "Latitude": -23.8486,
+    "Longitude": -46.1396
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Rua Praça Gumercindo de Paiva Castro,",
+    "Cidade": "Birigui",
+    "Estado": "SP",
+    "Latitude": -21.291,
+    "Longitude": -50.3432
+  },
+  {
+    "Nome": "Hospital da Clínicas - UNESP",
+    "Endereço": "Distrito de Rubião Junior, Rua Manoel de Oliveira, s/nº",
+    "Cidade": "Botucatu",
+    "Estado": "SP",
+    "Latitude": -22.8837,
+    "Longitude": -48.4437
+  },
+  {
+    "Nome": "Hospital Universitário São Francisco",
+    "Endereço": "Av. São Francisco de Assis, nº 218",
+    "Cidade": "Bragança Paulista",
+    "Estado": "SP",
+    "Latitude": -22.9527,
+    "Longitude": -46.5419
+  },
+  {
+    "Nome": "Pronto Socorro Hospital Santa Terezinha",
+    "Endereço": "Av. Rui Barbosa, nº 703",
+    "Cidade": "Brotas",
+    "Estado": "SP",
+    "Latitude": -22.2795,
+    "Longitude": -48.1251
+  },
+  {
+    "Nome": "Unidade Mista de Saúde de Buri",
+    "Endereço": "Rua Rui Barbosa , nº 158",
+    "Cidade": "Buri",
+    "Estado": "SP",
+    "Latitude": -23.7977,
+    "Longitude": -48.5958
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia São Francisco",
+    "Endereço": "Rua Guilherme Guerbas, nº 353",
+    "Cidade": "Buritama",
+    "Estado": "SP",
+    "Latitude": -21.0661,
+    "Longitude": -50.1475
+  },
+  {
+    "Nome": "Hospital N. Sra. D'Ajuda (FUSAM)",
+    "Endereço": "R. Pereira de Matos, nº 63 - Centro",
+    "Cidade": "Caçapava",
+    "Estado": "SP",
+    "Latitude": -23.0992,
+    "Longitude": -45.7076
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "R. Padre de Angelis, nº 39",
+    "Cidade": "Caconde",
+    "Estado": "SP",
+    "Latitude": -21.528,
+    "Longitude": -46.6437
+  },
+  {
+    "Nome": "Pronto Socorro Santa Casa de Misericórdia de",
+    "Endereço": "Rua Justino Franco Junior, nº 181",
+    "Cidade": "Cafelândia/sp",
+    "Estado": "SP",
+    "Latitude": -21.8031,
+    "Longitude": -49.6092
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia de Cafelândia",
+    "Endereço": "R. Justino Franco Júnior, 11 - Centro",
+    "Cidade": "",
+    "Estado": "SP",
+    "Latitude": "#N/A",
+    "Longitude": "#N/A"
+  },
+  {
+    "Nome": "Hospital Vitalina Ventura e Pronto",
+    "Endereço": "Rua Flavio Augusto de Moraes , nº 80",
+    "Cidade": "Caieiras",
+    "Estado": "SP",
+    "Latitude": -23.3607,
+    "Longitude": -46.7397
+  },
+  {
+    "Nome": "Hospital Municipal Reynaldo Gerra",
+    "Endereço": "Av. Trabalhadores,",
+    "Cidade": "Cajati",
+    "Estado": "SP",
+    "Latitude": -24.7324,
+    "Longitude": -48.1223
+  },
+  {
+    "Nome": "C.S. II",
+    "Endereço": "Rua Capitão José F. Diniz, nº 473",
+    "Cidade": "Cajuru",
+    "Estado": "SP",
+    "Latitude": -21.2749,
+    "Longitude": -47.303
+  },
+  {
+    "Nome": "Hospital das Clínicas da UNICAMP - CCI",
+    "Endereço": "Cidade Universitária Zeferino Vaz",
+    "Cidade": "Campinas",
+    "Estado": "SP",
+    "Latitude": -22.9053,
+    "Longitude": -47.0659
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Av. Adhemar de Barros, nº 115 - Vila Abernésia",
+    "Cidade": "Campos do Jordão",
+    "Estado": "SP",
+    "Latitude": -22.7296,
+    "Longitude": -45.5833
+  },
+  {
+    "Nome": "Unidade de Saúde Mista",
+    "Endereço": "Rua Luiz Wilson Barbosa,",
+    "Cidade": "Cananéia",
+    "Estado": "SP",
+    "Latitude": -25.0144,
+    "Longitude": -47.9341
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Auta de Camargo Lírio , nº 51",
+    "Cidade": "Capão Bonito",
+    "Estado": "SP",
+    "Latitude": -24.0113,
+    "Longitude": -48.3482
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Praça Dr. Mário Dias de Aguiar, nº 1",
+    "Cidade": "Capivari",
+    "Estado": "SP",
+    "Latitude": -22.9951,
+    "Longitude": -47.5071
+  },
+  {
+    "Nome": "Casa de Saúde Stella Maris",
+    "Endereço": "Av. Miguel Varlez, nº 980",
+    "Cidade": "Caraguatatuba",
+    "Estado": "SP",
+    "Latitude": -23.6125,
+    "Longitude": -45.4125
+  },
+  {
+    "Nome": "Santa Casa Leonor Mendes de Barros",
+    "Endereço": "Rua Emílio Fernandes Bilar, nº 1650",
+    "Cidade": "Cardoso",
+    "Estado": "SP",
+    "Latitude": -20.08,
+    "Longitude": -49.9183
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Pça Dr. Carvalho, nº 204",
+    "Cidade": "Casa Branca",
+    "Estado": "SP",
+    "Latitude": -21.7708,
+    "Longitude": -47.0852
+  },
+  {
+    "Nome": "Hospital Sociedade Beneficente",
+    "Endereço": "Rua Nagib M. Zahi, nº 457",
+    "Cidade": "Castilho",
+    "Estado": "SP",
+    "Latitude": -20.8689,
+    "Longitude": -51.4884
+  },
+  {
+    "Nome": "Hosp. Padre Albino",
+    "Endereço": "Rua Belém, nº 519 - Centro",
+    "Cidade": "Catanduva",
+    "Estado": "SP",
+    "Latitude": -21.1314,
+    "Longitude": -48.977
+  },
+  {
+    "Nome": "Associação Hospitalar de Clementina",
+    "Endereço": "Rua João Francisco Vasquez, nº 01 - Centro",
+    "Cidade": "Clementina",
+    "Estado": "SP",
+    "Latitude": -21.5604,
+    "Longitude": -50.4525
+  },
+  {
+    "Nome": "Hospital José Venâncio",
+    "Endereço": "Praça Lamounier de Andrade, nº 126",
+    "Cidade": "Colina",
+    "Estado": "SP",
+    "Latitude": -20.7114,
+    "Longitude": -48.5387
+  },
+  {
+    "Nome": "Hospital Municipal Júlio R. de Paula",
+    "Endereço": "Rua Antônio Prado, nº 807",
+    "Cidade": "Colômbia",
+    "Estado": "SP",
+    "Latitude": -20.1768,
+    "Longitude": -48.6865
+  },
+  {
+    "Nome": "Associação Hospital de Cotia",
+    "Endereço": "Av. Odair Pacheco Pedroso, nº 171",
+    "Cidade": "Cotia",
+    "Estado": "SP",
+    "Latitude": -23.6022,
+    "Longitude": -46.919
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Av. Major Novaes, nº 715",
+    "Cidade": "Cruzeiro",
+    "Estado": "SP",
+    "Latitude": -22.5728,
+    "Longitude": -44.969
+  },
+  {
+    "Nome": "P. S. Central",
+    "Endereço": "Av. 9 de Abril, n° 2800",
+    "Cidade": "Cubatão",
+    "Estado": "SP",
+    "Latitude": -23.8911,
+    "Longitude": -46.424
+  },
+  {
+    "Nome": "Santa Casa Maternidade N. Sra. Conceição",
+    "Endereço": "Av. Padre Rodolfo, nº 320 - Alto do Cruzeiro",
+    "Cidade": "Cunha",
+    "Estado": "SP",
+    "Latitude": -23.0731,
+    "Longitude": -44.9576
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Octávio Gabrielli, nº 827",
+    "Cidade": "Descalvado",
+    "Estado": "SP",
+    "Latitude": -21.9002,
+    "Longitude": -47.6181
+  },
+  {
+    "Nome": "Pronto Socorro Santa Casa de Misericórdia Dois Córregos",
+    "Endereço": "Av. Dr. Joaquim Roberto Carvalho Pinto, nº 896",
+    "Cidade": "Dois Córregos",
+    "Estado": "SP",
+    "Latitude": -22.3673,
+    "Longitude": -48.3819
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Virgílio Pagnozzi, nº 822",
+    "Cidade": "Dracena",
+    "Estado": "SP",
+    "Latitude": -21.4843,
+    "Longitude": -51.535
+  },
+  {
+    "Nome": "Pronto Socorro Santa Casa de Duartina",
+    "Endereço": "Av. Dr. Gil Borges, nº 226",
+    "Cidade": "Duartina",
+    "Estado": "SP",
+    "Latitude": -22.4146,
+    "Longitude": -49.4084
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Pça. Engenheiro Bauer, nº 56",
+    "Cidade": "Eldorado",
+    "Estado": "SP",
+    "Latitude": -23.7868,
+    "Longitude": -54.2838
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Av. Elias Yazbeck, nº 1415 - Centro",
+    "Cidade": "Embu das Artes",
+    "Estado": "SP",
+    "Latitude": -23.6437,
+    "Longitude": -46.8579
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Rua Celestino Apa, nº 50",
+    "Cidade": "Embu-Guaçu",
+    "Estado": "SP",
+    "Latitude": -23.8297,
+    "Longitude": -46.8136
+  },
+  {
+    "Nome": "Pronto Atendimento",
+    "Endereço": "Dr. Ciro Corsi R. Teixeira Rios, nº 210",
+    "Cidade": "Espírito Santo do Pinhal",
+    "Estado": "SP",
+    "Latitude": -22.1909,
+    "Longitude": -46.7477
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Rua Paraná, nº 1141 - Centro",
+    "Cidade": "Estrela d'Oeste",
+    "Estado": "SP",
+    "Latitude": -20.2875,
+    "Longitude": -50.4049
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Pça. Dr. José Sebastião de Oliveira, nº 44",
+    "Cidade": "Fartura",
+    "Estado": "SP",
+    "Latitude": -23.3916,
+    "Longitude": -49.5124
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Av. Afonso Cáfaro, nº 2630 - Jd. Santista",
+    "Cidade": "Fernandópolis",
+    "Estado": "SP",
+    "Latitude": -20.2806,
+    "Longitude": -50.2471
+  },
+  {
+    "Nome": "Fundação Civil Casa Misericórdia",
+    "Endereço": "Pça. D. Pedro I, nº 1826",
+    "Cidade": "Franca",
+    "Estado": "SP",
+    "Latitude": -20.5352,
+    "Longitude": -47.4039
+  },
+  {
+    "Nome": "Hospital Estadual Dr. Albano da Franca Rocha",
+    "Endereço": "Av. Coqueiros,",
+    "Cidade": "Franco da Rocha",
+    "Estado": "SP",
+    "Latitude": -23.3229,
+    "Longitude": -46.729
+  },
+  {
+    "Nome": "Hosp. São Lucas",
+    "Endereço": "Rua Dr. Orlando Thiago dos Santos, nº 70",
+    "Cidade": "Garça",
+    "Estado": "SP",
+    "Latitude": -22.2125,
+    "Longitude": -49.6546
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia N. Senhora das Dores de General Salgado",
+    "Endereço": "Rua Nadir Garcia, nº 555",
+    "Cidade": "General Salgado",
+    "Estado": "SP",
+    "Latitude": -20.6485,
+    "Longitude": -50.364
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia de Guairá",
+    "Endereço": "Rua 24, nº 872",
+    "Cidade": "Guaíra",
+    "Estado": "SP",
+    "Latitude": -20.3196,
+    "Longitude": -48.312
+  },
+  {
+    "Nome": "Hospital Maternidade de Guaraçaí",
+    "Endereço": "Rua Benedito Bem-Hur Louzada, nº 1210",
+    "Cidade": "Guaraçaí",
+    "Estado": "SP",
+    "Latitude": -21.0292,
+    "Longitude": -51.2119
+  },
+  {
+    "Nome": "Santa Casa de Guararapes",
+    "Endereço": "Av. Marechal Floriano, nº 1062",
+    "Cidade": "Guararapes",
+    "Estado": "SP",
+    "Latitude": -21.2544,
+    "Longitude": -50.6453
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "R. Rangel Pestana , nº 194 - Centro",
+    "Cidade": "Guaratinguetá",
+    "Estado": "SP",
+    "Latitude": -22.8075,
+    "Longitude": -45.1938
+  },
+  {
+    "Nome": "Hosp. Santo Amaro",
+    "Endereço": "Rua Quinto Bertoldi, nº40 - V. Maia",
+    "Cidade": "Guarujá",
+    "Estado": "SP",
+    "Latitude": -23.9888,
+    "Longitude": -46.258
+  },
+  {
+    "Nome": "Hospital Municipal de Guarulhos",
+    "Endereço": "Av. Tiradentes,",
+    "Cidade": "Guarulhos",
+    "Estado": "SP",
+    "Latitude": -23.4538,
+    "Longitude": -46.5333
+  },
+  {
+    "Nome": "Pronto Socorro da Santa Casa de Iacanga",
+    "Endereço": "Pça. Antônio Garcia Teixeira, nº 68",
+    "Cidade": "Iacanga",
+    "Estado": "SP",
+    "Latitude": -21.8896,
+    "Longitude": -49.031
+  },
+  {
+    "Nome": "Santa Casa e Maternidade",
+    "Endereço": "Rua Domingos Robert, nº 1090",
+    "Cidade": "Ibitinga",
+    "Estado": "SP",
+    "Latitude": -21.7562,
+    "Longitude": -48.8319
+  },
+  {
+    "Nome": "Hospital Municipal",
+    "Endereço": "Rua Gabriel Monteiro da Silva, nº 888",
+    "Cidade": "Ibiúna",
+    "Estado": "SP",
+    "Latitude": -23.6596,
+    "Longitude": -47.223
+  },
+  {
+    "Nome": "Hospital Municipal",
+    "Endereço": "Rua José Simões Filho, nº 81",
+    "Cidade": "Iepê",
+    "Estado": "SP",
+    "Latitude": -22.6602,
+    "Longitude": -51.0779
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Av. Benedito Rodrigues de Freitas, nº 300",
+    "Cidade": "Igaratá",
+    "Estado": "SP",
+    "Latitude": -23.2037,
+    "Longitude": -46.157
+  },
+  {
+    "Nome": "Unidade Mista",
+    "Endereço": "Rua dos Estudantes, nº 40 - Centro",
+    "Cidade": "Iguape",
+    "Estado": "SP",
+    "Latitude": -24.699,
+    "Longitude": -47.5537
+  },
+  {
+    "Nome": "P. A. Valdir Sampaio",
+    "Endereço": "Av. São Paulo, Rua Manoel de Oliveira, s/nº - Balneário Adriana",
+    "Cidade": "Ilha Comprida",
+    "Estado": "SP",
+    "Latitude": -24.7307,
+    "Longitude": -47.5383
+  },
+  {
+    "Nome": "Associação Hospitalar de Ilha Solteira",
+    "Endereço": "Alameda Bahia, nº 618",
+    "Cidade": "Ilha Solteira",
+    "Estado": "SP",
+    "Latitude": -20.4326,
+    "Longitude": -51.3426
+  },
+  {
+    "Nome": "Hosp. Municipal Gov. Mario Covas",
+    "Endereço": "Rua Prof. Malaquias de Oliveira Freitas, nº 154",
+    "Cidade": "Ilhabela",
+    "Estado": "SP",
+    "Latitude": -23.7785,
+    "Longitude": -45.3552
+  },
+  {
+    "Nome": "Pronto Atendimento",
+    "Endereço": "Rua 12 de Janeiro, nº 17 - Centro",
+    "Cidade": "Iporanga",
+    "Estado": "SP",
+    "Latitude": -24.5847,
+    "Longitude": -48.5971
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Ferdinando Fratin, nº 335. Tel.: (16) 3832-1222",
+    "Cidade": "Ipuã",
+    "Estado": "SP",
+    "Latitude": -20.4438,
+    "Longitude": -48.0129
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua 13 de Maio, nº 385. Tel.: (15) 3562-1420",
+    "Cidade": "Itaberá",
+    "Estado": "SP",
+    "Latitude": -23.8638,
+    "Longitude": -49.14
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Av. Rui Barbosa, Rua Manoel de Oliveira, s/nº - Centro",
+    "Cidade": "Itanhaém",
+    "Estado": "SP",
+    "Latitude": -24.1736,
+    "Longitude": -46.788
+  },
+  {
+    "Nome": "Pronto Socorro Central",
+    "Endereço": "Rua Carlos Eduardo D. Tautico, nº 77",
+    "Cidade": "Itapecerica da Serra",
+    "Estado": "SP",
+    "Latitude": -23.7161,
+    "Longitude": -46.8572
+  },
+  {
+    "Nome": "P. S. Municipal de Itapetininga",
+    "Endereço": "Rua Padre Albuquerque , nº 245 - Centro",
+    "Cidade": "Itapetininga",
+    "Estado": "SP",
+    "Latitude": -23.5886,
+    "Longitude": -48.0483
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Santos Dumont, nº 433",
+    "Cidade": "Itapeva",
+    "Estado": "SP",
+    "Latitude": -23.9788,
+    "Longitude": -48.8764
+  },
+  {
+    "Nome": "Hospital Municipal de Itapira",
+    "Endereço": "Reverendo Alfredo Guimarães, nº 111",
+    "Cidade": "Itapira",
+    "Estado": "SP",
+    "Latitude": -22.4357,
+    "Longitude": -46.8224
+  },
+  {
+    "Nome": "Hosp. Mat. Nossa Senhora das Graças",
+    "Endereço": "Av. Santa Cruz , nº 184. Tel.: (15) 3565-1211",
+    "Cidade": "Itaporanga",
+    "Estado": "SP",
+    "Latitude": -23.7043,
+    "Longitude": -49.4819
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua São Pedro, nº 30",
+    "Cidade": "Itararé",
+    "Estado": "SP",
+    "Latitude": -24.1085,
+    "Longitude": -49.3352
+  },
+  {
+    "Nome": "Unidade Mista de Itariri",
+    "Endereço": "Rua Benedito Calixto, nº 260",
+    "Cidade": "Itariri",
+    "Estado": "SP",
+    "Latitude": -24.2834,
+    "Longitude": -47.1736
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Av. da Saudade, nº 43",
+    "Cidade": "Itatiba",
+    "Estado": "SP",
+    "Latitude": -23.0035,
+    "Longitude": -46.8464
+  },
+  {
+    "Nome": "Hospital São Camilo",
+    "Endereço": "Rua Joaquim Berbardes Borges, nº 372",
+    "Cidade": "Itu",
+    "Estado": "SP",
+    "Latitude": -23.2544,
+    "Longitude": -47.2927
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Cap. Antônio Justino Faleiro , nº 729",
+    "Cidade": "Ituverava",
+    "Estado": "SP",
+    "Latitude": -20.3355,
+    "Longitude": -47.7902
+  },
+  {
+    "Nome": "Santa Casa de Jacareí",
+    "Endereço": "Rua Antônio Afonso , nº",
+    "Cidade": "Jacareí",
+    "Estado": "SP",
+    "Latitude": -23.2983,
+    "Longitude": -45.9658
+  },
+  {
+    "Nome": "Pronto Socorro",
+    "Endereço": "Rua Eunice Carneiro de Paula, nº 101 - Centro",
+    "Cidade": "Jacupiranga",
+    "Estado": "SP",
+    "Latitude": -24.6963,
+    "Longitude": -48.0064
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Av. Integração, nº 2551 - Jd. Trianon",
+    "Cidade": "Jales",
+    "Estado": "SP",
+    "Latitude": -20.2672,
+    "Longitude": -50.5494
+  },
+  {
+    "Nome": "Pronto Socorro Santa Casa de Jaú",
+    "Endereço": "Rua Riachuelo, nº 1073",
+    "Cidade": "Jaú",
+    "Estado": "SP",
+    "Latitude": -22.2936,
+    "Longitude": -48.5592
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Francisco Wolhers, nº 57",
+    "Cidade": "Joanópolis",
+    "Estado": "SP",
+    "Latitude": -22.927,
+    "Longitude": -46.2741
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua XV de Novembro,",
+    "Cidade": "José Bonifácio",
+    "Estado": "SP",
+    "Latitude": -21.0551,
+    "Longitude": -49.6892
+  },
+  {
+    "Nome": "Hospital São Vicente de Paula",
+    "Endereço": "Rua São Vicente de Paula, Rua Manoel de Oliveira, s/nº 223",
+    "Cidade": "Jundiaí",
+    "Estado": "SP",
+    "Latitude": -23.1852,
+    "Longitude": -46.8974
+  },
+  {
+    "Nome": "Hospital Universitário",
+    "Endereço": "Praça Rotatória, Rua Manoel de Oliveira, s/nº",
+    "Cidade": "Jundiaí",
+    "Estado": "SP",
+    "Latitude": -23.1852,
+    "Longitude": -46.8974
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Porto Alegre, nº 1221",
+    "Cidade": "Junqueirópolis",
+    "Estado": "SP",
+    "Latitude": -21.5103,
+    "Longitude": -51.4342
+  },
+  {
+    "Nome": "Hospital Santo Antônio",
+    "Endereço": "Rua José Nunes de Aquino, nº 72 - Vila Nova",
+    "Cidade": "Juquiá",
+    "Estado": "SP",
+    "Latitude": -24.3101,
+    "Longitude": -47.6426
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Rua José Antônio Nunes, nº 90",
+    "Cidade": "Juquitiba",
+    "Estado": "SP",
+    "Latitude": -23.9244,
+    "Longitude": -47.0653
+  },
+  {
+    "Nome": "Centro Saúde II de Lagoinha",
+    "Endereço": "Rua Antônio Silva Cunha Bueno, nº 25",
+    "Cidade": "Lagoinha",
+    "Estado": "SP",
+    "Latitude": -23.0846,
+    "Longitude": -45.1944
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Pe. Julião, nº 1213",
+    "Cidade": "Leme",
+    "Estado": "SP",
+    "Latitude": -22.1809,
+    "Longitude": -47.3841
+  },
+  {
+    "Nome": "Pronto Socorro Hospital Nossa Senhora da Piedade",
+    "Endereço": "Rua Geraldo Pereira de Barros, nº",
+    "Cidade": "Lençóis Paulista",
+    "Estado": "SP",
+    "Latitude": -22.6027,
+    "Longitude": -48.8037
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Av. Antônio Ometto, nº 675",
+    "Cidade": "Limeira",
+    "Estado": "SP",
+    "Latitude": -22.566,
+    "Longitude": -47.397
+  },
+  {
+    "Nome": "Pronto Socorro Sta. Casa de Lins",
+    "Endereço": "Rua Pedro de Toledo, nº 486",
+    "Cidade": "Lins",
+    "Estado": "SP",
+    "Latitude": -21.6718,
+    "Longitude": -49.7526
+  },
+  {
+    "Nome": "P.S. da Santa Casa de Misericórdia",
+    "Endereço": "Rua Dom Bosco, nº 562 - Centro",
+    "Cidade": "Lorena",
+    "Estado": "SP",
+    "Latitude": -22.7334,
+    "Longitude": -45.1197
+  },
+  {
+    "Nome": "Hospital de Clínicas I (Adultos)",
+    "Endereço": "Rua Aziz Atallah, s/nº",
+    "Cidade": "Marília",
+    "Estado": "SP",
+    "Latitude": -22.2171,
+    "Longitude": -49.9501
+  },
+  {
+    "Nome": "Hospital de Clínicas II (Crianças)",
+    "Endereço": "Av. Sampaio Vidal, nº 42",
+    "Cidade": "Marília",
+    "Estado": "SP",
+    "Latitude": -22.2171,
+    "Longitude": -49.9501
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua José Henrique de Mello, nº 236",
+    "Cidade": "Martinópolis",
+    "Estado": "SP",
+    "Latitude": -22.1462,
+    "Longitude": -51.1709
+  },
+  {
+    "Nome": "Sociedade Matonense de Benemerência",
+    "Endereço": "Rua Sinhorinha Frota, nº 556",
+    "Cidade": "Matão",
+    "Estado": "SP",
+    "Latitude": -21.6025,
+    "Longitude": -48.364
+  },
+  {
+    "Nome": "Santa Casa",
+    "Endereço": "R. José Jacob Daur, nº 925",
+    "Cidade": "Miguelópolis",
+    "Estado": "SP",
+    "Latitude": -20.1796,
+    "Longitude": -48.031
+  },
+  {
+    "Nome": "Unidade Hospitalar de Miracatu",
+    "Endereço": "Rua Dona Evarista Castro Ferreira, nº 77",
+    "Cidade": "Miracatu",
+    "Estado": "SP",
+    "Latitude": -24.2766,
+    "Longitude": -47.4625
+  },
+  {
+    "Nome": "Hosp. Est. Dr. Oswaldo Branadi Faria",
+    "Endereço": "Av. Dr. Raul da Cunha Bueno, nº 585",
+    "Cidade": "Mirandópolis",
+    "Estado": "SP",
+    "Latitude": -21.1313,
+    "Longitude": -51.1035
+  },
+  {
+    "Nome": "Pronto Socorro 24 horas - UBS II Expedito",
+    "Endereço": "Rua Amélia Fussaie Okubo, nº 8 - 54",
+    "Cidade": "Mirante do Paranapanema",
+    "Estado": "SP",
+    "Latitude": -22.2904,
+    "Longitude": -51.9084
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Pça. Jefferson Ferraz, nº 90 - Centro",
+    "Cidade": "Mococa",
+    "Estado": "SP",
+    "Latitude": -21.4647,
+    "Longitude": -47.0024
+  },
+  {
+    "Nome": "Hospital Luzia Pinho de Melo",
+    "Endereço": "Rua Manoel de Oliveira, s/nº",
+    "Cidade": "Mogi das Cruzes",
+    "Estado": "SP",
+    "Latitude": -23.5208,
+    "Longitude": -46.1854
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Chico de Paula, nº 608",
+    "Cidade": "Mogi Guaçu",
+    "Estado": "SP",
+    "Latitude": -22.3675,
+    "Longitude": -46.9428
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Maestro Azevedo, nº 124",
+    "Cidade": "Mogi Mirim",
+    "Estado": "SP",
+    "Latitude": -22.4332,
+    "Longitude": -46.9532
+  },
+  {
+    "Nome": "Pronto Socorro Agenor Campos",
+    "Endereço": "Rua Ubatuba, s/nº",
+    "Cidade": "Mongaguá",
+    "Estado": "SP",
+    "Latitude": -24.0809,
+    "Longitude": -46.6265
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Pça. Nilton Prado, nº 51 - Centro",
+    "Cidade": "Monte Azul Paulista",
+    "Estado": "SP",
+    "Latitude": -20.9065,
+    "Longitude": -48.6387
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Rua Rubião Junior, nº 20",
+    "Cidade": "Monteiro Lobato",
+    "Estado": "SP",
+    "Latitude": -22.9544,
+    "Longitude": -45.8407
+  },
+  {
+    "Nome": "Hosp. São Marcos da Sama",
+    "Endereço": "Rua Sebastião Antonio Muniz, nº 164",
+    "Cidade": "Morro Agudo",
+    "Estado": "SP",
+    "Latitude": -20.7288,
+    "Longitude": -48.0581
+  },
+  {
+    "Nome": "Hospital São Domingos na Província de Deus",
+    "Endereço": "Rua Nossa Senhora das Graças, nº 272",
+    "Cidade": "Nhandeara",
+    "Estado": "SP",
+    "Latitude": -20.6945,
+    "Longitude": -50.0436
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Av. Hildeberto de Albuquerque Ferreira, nº 1271",
+    "Cidade": "Nova Granada",
+    "Estado": "SP",
+    "Latitude": -20.5321,
+    "Longitude": -49.3123
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Vinte Oito de Outubro, nº 1202 - Centro",
+    "Cidade": "Novo Horizonte",
+    "Estado": "SP",
+    "Latitude": -26.4442,
+    "Longitude": -52.8281
+  },
+  {
+    "Nome": "Santa Casa Misericórdia de Olímpia",
+    "Endereço": "Rua Síria, nº 139",
+    "Cidade": "Olímpia",
+    "Estado": "SP",
+    "Latitude": -20.7366,
+    "Longitude": -48.9106
+  },
+  {
+    "Nome": "Hosp. Beneficente Santo Antônio de Orlândia",
+    "Endereço": "Av. 3, nº 941",
+    "Cidade": "Orlândia",
+    "Estado": "SP",
+    "Latitude": -20.7169,
+    "Longitude": -47.8852
+  },
+  {
+    "Nome": "Santa Casa de Ourinhos",
+    "Endereço": "Rua D. Pedro I, nº 716 - Centro",
+    "Cidade": "Ourinhos",
+    "Estado": "SP",
+    "Latitude": -22.9797,
+    "Longitude": -49.8697
+  },
+  {
+    "Nome": "Hosp. Municipal João Veloso Ouro Oeste",
+    "Endereço": "Av. Bandeirantes, nº 1026 - Centro",
+    "Cidade": "Ouroeste",
+    "Estado": "SP",
+    "Latitude": -20.0061,
+    "Longitude": -50.3768
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Av. Carlos Gomes, n° 4929 - Centro",
+    "Cidade": "Palmeira d'Oeste",
+    "Estado": "SP",
+    "Latitude": -20.4148,
+    "Longitude": -50.7632
+  },
+  {
+    "Nome": "Santa Casa e Maternidade",
+    "Endereço": "Rua Manoel Fernandes da Cunha, nº 512",
+    "Cidade": "Panorama",
+    "Estado": "SP",
+    "Latitude": -21.354,
+    "Longitude": -51.8562
+  },
+  {
+    "Nome": "Santa Casa de Paraguaçu Paulista",
+    "Endereço": "Rua Caramuru, nº 568 - Centro",
+    "Cidade": "Paraguaçu Paulista",
+    "Estado": "SP",
+    "Latitude": -22.4114,
+    "Longitude": -50.5732
+  },
+  {
+    "Nome": "Unidade de Pronto Atendimento",
+    "Endereço": "Rua Major Soares,",
+    "Cidade": "Paraibuna",
+    "Estado": "SP",
+    "Latitude": -23.3872,
+    "Longitude": -45.6639
+  },
+  {
+    "Nome": "Hosp. Regional Vale Ribeira",
+    "Endereço": "Rua dos Expedicionários, nº 140 - Centro",
+    "Cidade": "Pariquera-Açu",
+    "Estado": "SP",
+    "Latitude": -24.7147,
+    "Longitude": -47.8742
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Cônego Peregrino, nº 1181",
+    "Cidade": "Patrocínio Paulista",
+    "Estado": "SP",
+    "Latitude": -20.6384,
+    "Longitude": -47.2801
+  },
+  {
+    "Nome": "Centro de Saúde de Paulo de Faria",
+    "Endereço": "Av. XV de Novembro, nº 758",
+    "Cidade": "Paulo de Faria",
+    "Estado": "SP",
+    "Latitude": -20.0296,
+    "Longitude": -49.4
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Tenente Salviano, nº 125",
+    "Cidade": "Pedregulho",
+    "Estado": "SP",
+    "Latitude": -20.2535,
+    "Longitude": -47.4775
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia de Penápolis",
+    "Endereço": "Av. Santa Casa, nº 566",
+    "Cidade": "Penápolis",
+    "Estado": "SP",
+    "Latitude": -21.4148,
+    "Longitude": -50.0769
+  },
+  {
+    "Nome": "Santa Casa de Pereira Barreto",
+    "Endereço": "Rua Dermival Franceschi, nº 505",
+    "Cidade": "Pereira Barreto",
+    "Estado": "SP",
+    "Latitude": -20.6368,
+    "Longitude": -51.1123
+  },
+  {
+    "Nome": "Unidade Mista Peruíbe",
+    "Endereço": "Rua Alfredo Gomes, nº 46",
+    "Cidade": "Peruíbe",
+    "Estado": "SP",
+    "Latitude": -24.312,
+    "Longitude": -47.0012
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Quintino Bocaiúva, nº 154",
+    "Cidade": "Piedade",
+    "Estado": "SP",
+    "Latitude": -23.7139,
+    "Longitude": -47.4256
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Av. Papa João XXIII, nº 1038",
+    "Cidade": "Pilar do Sul",
+    "Estado": "SP",
+    "Latitude": -23.8077,
+    "Longitude": -47.7222
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Rua Major José dos Santos Moreira, nº 466",
+    "Cidade": "Pindamonhangaba",
+    "Estado": "SP",
+    "Latitude": -22.9246,
+    "Longitude": -45.4613
+  },
+  {
+    "Nome": "Santa Casa São Vicente de Paula",
+    "Endereço": "Av. Dr. Cândido Rodrigues, nº 36",
+    "Cidade": "Piracaia",
+    "Estado": "SP",
+    "Latitude": -23.0525,
+    "Longitude": -46.3594
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Av. Independência, nº 953",
+    "Cidade": "Piracicaba",
+    "Estado": "SP",
+    "Latitude": -22.7338,
+    "Longitude": -47.6476
+  },
+  {
+    "Nome": "Sociedade de Beneficência",
+    "Endereço": "Rua 7 de setembro, nº 818",
+    "Cidade": "Piraju",
+    "Estado": "SP",
+    "Latitude": -23.1981,
+    "Longitude": -49.3803
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Av. Newton Prado, nº 1883",
+    "Cidade": "Pirassununga",
+    "Estado": "SP",
+    "Latitude": -21.996,
+    "Longitude": -47.4257
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Luiz Selani Neto, 345",
+    "Cidade": "Pompéia",
+    "Estado": "SP",
+    "Latitude": -22.107,
+    "Longitude": -50.176
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Dr. Carlinho Valeriani, nº 377",
+    "Cidade": "Porto Ferreira",
+    "Estado": "SP",
+    "Latitude": -21.8498,
+    "Longitude": -47.487
+  },
+  {
+    "Nome": "Hospital Assistencial de Potirendaba",
+    "Endereço": "Av. Josefa Peres Garcia, nº 430",
+    "Cidade": "Potirendaba",
+    "Estado": "SP",
+    "Latitude": -21.0428,
+    "Longitude": -49.3815
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "R. Antônio Venâncio Lopes, nº 09 - 52",
+    "Cidade": "Presidente Epitácio",
+    "Estado": "SP",
+    "Latitude": -21.7651,
+    "Longitude": -52.1111
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Venceslau Braz, nº 05",
+    "Cidade": "Presidente Prudente",
+    "Estado": "SP",
+    "Latitude": -22.1207,
+    "Longitude": -51.3925
+  },
+  {
+    "Nome": "Hospital Universitário (Hosp. Regional)",
+    "Endereço": "Rua José Bogiovani, n° 900",
+    "Cidade": "Presidente Prudente",
+    "Estado": "SP",
+    "Latitude": -22.1207,
+    "Longitude": -51.3925
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Emiliano Vilanova, nº 66",
+    "Cidade": "Presidente Venceslau",
+    "Estado": "SP",
+    "Latitude": -21.8732,
+    "Longitude": -51.8447
+  },
+  {
+    "Nome": "Pronto Socorro Hospital Geral de Promissão",
+    "Endereço": "Av. Gen. Eurico Gaspar Dutra, nº 620",
+    "Cidade": "Promissão",
+    "Estado": "SP",
+    "Latitude": -21.5356,
+    "Longitude": -49.8599
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Ladeira Nossa Senhora de Fátima, nº 65 - Centro",
+    "Cidade": "Queluz",
+    "Estado": "SP",
+    "Latitude": -22.5312,
+    "Longitude": -44.7781
+  },
+  {
+    "Nome": "Hospital e Maternidade",
+    "Endereço": "Rua Mário César de Camargo, nº 1559",
+    "Cidade": "Rancharia",
+    "Estado": "SP",
+    "Latitude": -22.2269,
+    "Longitude": -50.893
+  },
+  {
+    "Nome": "Hospital São João-Apamir",
+    "Endereço": "Rua Kiheji Nasumo, nº 165 - Centro",
+    "Cidade": "Registro",
+    "Estado": "SP",
+    "Latitude": -24.4979,
+    "Longitude": -47.8449
+  },
+  {
+    "Nome": "Unidade Integrada de Saúde de Ribeira",
+    "Endereço": "Rua Frederico Dias Batista, nº 306",
+    "Cidade": "Ribeira",
+    "Estado": "SP",
+    "Latitude": -24.6517,
+    "Longitude": -49.0044
+  },
+  {
+    "Nome": "Hosp. Municipal Maria Rosa Cardoso",
+    "Endereço": "Rua Capitão Elias Pereira, nº 1245",
+    "Cidade": "Ribeirão Branco",
+    "Estado": "SP",
+    "Latitude": -24.2206,
+    "Longitude": -48.7635
+  },
+  {
+    "Nome": "Hosp. Clínicas FMRP - USP",
+    "Endereço": "Rua Bernardino de Campos, nº 1000",
+    "Cidade": "Ribeirão Preto",
+    "Estado": "SP",
+    "Latitude": -21.1699,
+    "Longitude": -47.8099
+  },
+  {
+    "Nome": "Pronto Socorro Municipal Integrado",
+    "Endereço": "Rua 2, nº 298",
+    "Cidade": "Rio Claro",
+    "Estado": "SP",
+    "Latitude": -22.72,
+    "Longitude": -44.1419
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua 10, n° 865",
+    "Cidade": "Riolândia",
+    "Estado": "SP",
+    "Latitude": -19.9868,
+    "Longitude": -49.6836
+  },
+  {
+    "Nome": "Unidade Mista de Saúde de Riversul",
+    "Endereço": "Rua Elvira Biglia, nº 11",
+    "Cidade": "Riversul",
+    "Estado": "SP",
+    "Latitude": -23.829,
+    "Longitude": -49.429
+  },
+  {
+    "Nome": "Hospital Regional de Porto Primavera",
+    "Endereço": "Av. dos Barrageiros, Quadra 36,",
+    "Cidade": "Rosana",
+    "Estado": "SP",
+    "Latitude": -22.5782,
+    "Longitude": -53.0603
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Praça João Mendes, nº 31",
+    "Cidade": "Salesópolis",
+    "Estado": "SP",
+    "Latitude": -23.5288,
+    "Longitude": -45.8465
+  },
+  {
+    "Nome": "Casa de Misericórdia",
+    "Endereço": "Av. Duque de Caxias, nº 168",
+    "Cidade": "Santa Adélia",
+    "Estado": "SP",
+    "Latitude": -21.2427,
+    "Longitude": -48.8063
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Rua Espírito Santo, nº 905",
+    "Cidade": "Santa Albertina",
+    "Estado": "SP",
+    "Latitude": -20.0311,
+    "Longitude": -50.7297
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Rua 16, nº 195 - Centro",
+    "Cidade": "Santa Fé do Sul",
+    "Estado": "SP",
+    "Latitude": -20.2083,
+    "Longitude": -50.932
+  },
+  {
+    "Nome": "UPA - Unidade de Pronto Atendimento Santa Isabel",
+    "Endereço": "Rua Castelo Branco, nº 323 - Brotas",
+    "Cidade": "Santa Isabel",
+    "Estado": "SP",
+    "Latitude": -23.3172,
+    "Longitude": -46.2237
+  },
+  {
+    "Nome": "Hospital de Caridade Anita Costa",
+    "Endereço": "Praça Dr. Luiz Ramos e Silva, nº 328",
+    "Cidade": "Santo Anastácio",
+    "Estado": "SP",
+    "Latitude": -21.9747,
+    "Longitude": -51.6527
+  },
+  {
+    "Nome": "Hospital Guilherme Álvaro",
+    "Endereço": "Rua Oswaldo Cruz, nº 197",
+    "Cidade": "Santos",
+    "Estado": "SP",
+    "Latitude": -23.9535,
+    "Longitude": -46.335
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Praça General Marcondes Salgado, nº 34",
+    "Cidade": "São Bento do Sapucaí",
+    "Estado": "SP",
+    "Latitude": -22.6837,
+    "Longitude": -45.7287
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Paulino Botelho de Abreu Sampaio, nº 577",
+    "Cidade": "São Carlos",
+    "Estado": "SP",
+    "Latitude": -22.0174,
+    "Longitude": -47.886
+  },
+  {
+    "Nome": "Santa Casa D. Carolina Malheiros",
+    "Endereço": "Rua Carolina Malheiros, nº 92",
+    "Cidade": "São João da Boa Vista",
+    "Estado": "SP",
+    "Latitude": -21.9707,
+    "Longitude": -46.7944
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Piratininga, nº 1221",
+    "Cidade": "São Joaquim da Barra",
+    "Estado": "SP",
+    "Latitude": -20.5812,
+    "Longitude": -47.8593
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Av. Virgílio Pereira, nº 6",
+    "Cidade": "São José do Barreiro",
+    "Estado": "SP",
+    "Latitude": -22.6414,
+    "Longitude": -44.5774
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Coronel Alípio Dias, nº 620 - Centro",
+    "Cidade": "São José do Rio Pardo",
+    "Estado": "SP",
+    "Latitude": -21.5953,
+    "Longitude": -46.8873
+  },
+  {
+    "Nome": "Hospital de Base",
+    "Endereço": "Av. Brigadeiro Faria Lima, nº 5416 - São Manoel",
+    "Cidade": "São José do Rio Preto",
+    "Estado": "SP",
+    "Latitude": -20.8113,
+    "Longitude": -49.3758
+  },
+  {
+    "Nome": "Hospital Municipal",
+    "Endereço": "Rua Saigiro Nakamura, nº 800",
+    "Cidade": "São José dos Campos",
+    "Estado": "SP",
+    "Latitude": -23.1896,
+    "Longitude": -45.8841
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Coronel Alípio Dias, nº 620",
+    "Cidade": "São José do Rio Pardo",
+    "Estado": "SP",
+    "Latitude": -21.5953,
+    "Longitude": -46.8873
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Praça Coronel Theodor Coelho, nº 48",
+    "Cidade": "São Luiz do Paraitinga",
+    "Estado": "SP",
+    "Latitude": -23.222,
+    "Longitude": -45.3109
+  },
+  {
+    "Nome": "Pronto Atendimento Antônia de Lima Nardes",
+    "Endereço": "Rua Antônia Fogaça Almeida Lima, nº 420",
+    "Cidade": "São Miguel Arcanjo",
+    "Estado": "SP",
+    "Latitude": -23.8782,
+    "Longitude": -47.9935
+  },
+  {
+    "Nome": "Hospital Vital Brazil",
+    "Endereço": "Av. Vital Brasil, nº 1500 - Instituto Butantan",
+    "Cidade": "São Paulo",
+    "Estado": "SP",
+    "Latitude": -23.5329,
+    "Longitude": -46.6395
+  },
+  {
+    "Nome": "Hospital Beneficente São Lucas",
+    "Endereço": "Rua Malaquias Guerra, nº 254",
+    "Cidade": "São Pedro",
+    "Estado": "SP",
+    "Latitude": -5.90559,
+    "Longitude": -35.6317
+  },
+  {
+    "Nome": "Pronto Socorro de Boi Sucanga",
+    "Endereço": "Av. Walkir Vergani, nº 1050",
+    "Cidade": "São Sebastião",
+    "Estado": "SP",
+    "Latitude": -23.7951,
+    "Longitude": -45.4143
+  },
+  {
+    "Nome": "Hospital de Clínicas de São Sebastião",
+    "Endereço": "Rua Capitão Luis Soares, nº 550",
+    "Cidade": "São Sebastião",
+    "Estado": "SP",
+    "Latitude": -23.7951,
+    "Longitude": -45.4143
+  },
+  {
+    "Nome": "Irmandade da Santa Casa",
+    "Endereço": "Av. Santos Pinto, nº 351",
+    "Cidade": "Serra Negra",
+    "Estado": "SP",
+    "Latitude": -22.6139,
+    "Longitude": -46.7033
+  },
+  {
+    "Nome": "Pronto Socorro Municipal de Sete Barras",
+    "Endereço": "Rodovia SP 139 Km 21 - Centro",
+    "Cidade": "Sete Barras",
+    "Estado": "SP",
+    "Latitude": -24.382,
+    "Longitude": -47.9279
+  },
+  {
+    "Nome": "Unidade Mista de Saúde",
+    "Endereço": "Praça Padre Joaquim Ferreira da Cunha, nº 10",
+    "Cidade": "Silveiras",
+    "Estado": "SP",
+    "Latitude": -22.6638,
+    "Longitude": -44.8522
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Av. Dr. Renato Silva, nº 129",
+    "Cidade": "Socorro",
+    "Estado": "SP",
+    "Latitude": -22.5903,
+    "Longitude": -46.5251
+  },
+  {
+    "Nome": "Pronto Socorro Conjunto Hospitalar de Soroca-ba",
+    "Endereço": "Rua Cláudio Manoel da Costa,",
+    "Cidade": "Sorocaba",
+    "Estado": "SP",
+    "Latitude": -23.4969,
+    "Longitude": -47.4451
+  },
+  {
+    "Nome": "Rio Pardo Santa Casa de Santa Cruz Rio Pardo",
+    "Endereço": "Av. Dr. Ciro de Mello Camarinha, nº 514 - Centro",
+    "Cidade": "Santa Cruz",
+    "Estado": "SP",
+    "Latitude": -6.22475,
+    "Longitude": -36.0193
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Av. Padre Pio Corso, nº 1523",
+    "Cidade": "Santa Rita do Passa Quatro",
+    "Estado": "SP",
+    "Latitude": -21.7083,
+    "Longitude": -47.478
+  },
+  {
+    "Nome": "Hosp. Maria do Vale Pereira Ass. Benef",
+    "Endereço": "Rua Adinael Pereira, nº 1683",
+    "Cidade": "Tabapuã",
+    "Estado": "SP",
+    "Latitude": -20.9602,
+    "Longitude": -49.0307
+  },
+  {
+    "Nome": "Hospital Municipal de Taiuva",
+    "Endereço": "Pça Pedro Luiz Pedrinho Freita, nº 17",
+    "Cidade": "Taiúva",
+    "Estado": "SP",
+    "Latitude": -21.1223,
+    "Longitude": -48.4528
+  },
+  {
+    "Nome": "Hosp. Santa Casa São Vicente de Paulo",
+    "Endereço": "Av. da Saudade, nº 634",
+    "Cidade": "Tanabi",
+    "Estado": "SP",
+    "Latitude": -20.6228,
+    "Longitude": -49.6563
+  },
+  {
+    "Nome": "Santa Casa Misericórdia de Tapiraí",
+    "Endereço": "Rua Raul Leite de Magalhães, nº",
+    "Cidade": "Tapiraí",
+    "Estado": "SP",
+    "Latitude": -19.8936,
+    "Longitude": -46.0221
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Pça. Dr. José Furiatti, nº 153",
+    "Cidade": "Taquaritinga",
+    "Estado": "SP",
+    "Latitude": -21.4049,
+    "Longitude": -48.5103
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Marechal Peixoto, nº 95.",
+    "Cidade": "Taquarituba",
+    "Estado": "SP",
+    "Latitude": -23.5307,
+    "Longitude": -49.241
+  },
+  {
+    "Nome": "Pronto Socorro Municipal",
+    "Endereço": "Rua Capitão Lisboa , nº 1240 - Centro",
+    "Cidade": "Tatuí",
+    "Estado": "SP",
+    "Latitude": -23.3487,
+    "Longitude": -47.8461
+  },
+  {
+    "Nome": "Pronto Socorro Municipal CCI",
+    "Endereço": "Rua Benedito Cursino dos Santos, nº 101",
+    "Cidade": "Taubaté",
+    "Estado": "SP",
+    "Latitude": -23.0104,
+    "Longitude": -45.5593
+  },
+  {
+    "Nome": "Hospital Regional de Teodoro Sampaio",
+    "Endereço": "Alameda Trifon Infante Algarim, nº 1430",
+    "Cidade": "Teodoro Sampaio",
+    "Estado": "SP",
+    "Latitude": -12.295,
+    "Longitude": -38.6347
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "R. Manoel Ferreira Damião, nº 426",
+    "Cidade": "Tupã",
+    "Estado": "SP",
+    "Latitude": -21.9335,
+    "Longitude": -50.5191
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Almirante Barroso, nº 1436",
+    "Cidade": "Tupi Paulista",
+    "Estado": "SP",
+    "Latitude": -21.3825,
+    "Longitude": -51.575
+  },
+  {
+    "Nome": "Santa Casa de Misericórdia",
+    "Endereço": "Rua Conceição, nº 135",
+    "Cidade": "Ubatuba",
+    "Estado": "SP",
+    "Latitude": -23.4332,
+    "Longitude": -45.0834
+  },
+  {
+    "Nome": "Santa Casa de Valparaíso",
+    "Endereço": "Rua Bartolomeu Bueno, nº 241",
+    "Cidade": "Valparaíso",
+    "Estado": "SP",
+    "Latitude": -21.2229,
+    "Longitude": -50.8699
+  },
+  {
+    "Nome": "Hospital e Maternidade São Vicente Paulo",
+    "Endereço": "Rua do Hospital, nº 53",
+    "Cidade": "Viradouro",
+    "Estado": "SP",
+    "Latitude": -20.8734,
+    "Longitude": -48.293
+  },
+  {
+    "Nome": "Hospital Santa Casa de Misericórdia",
+    "Endereço": "Rua Minas Gerais, nº 497",
+    "Cidade": "Votuporanga",
+    "Estado": "SP",
+    "Latitude": -20.4237,
+    "Longitude": -49.9781
   }
+]
 
-  function mostrarResultados(lista) {
-    const container = document.getElementById('resultados');
-    container.innerHTML = '';
-    if (lista.length === 0) {
-      container.innerHTML = '<p>Nenhum resultado encontrado.</p>';
-      return;
-    }
-    lista.forEach(item => {
-      const div = document.createElement('div');
-      div.className = 'result';
-      div.innerHTML = `
-        <strong>${item["Nome"]}</strong><br>
-        ${item["Endereço"]}<br>
-        ${item["Cidade"]} - ${item["Estado"]}
-      `;
-      container.appendChild(div);
-    });
-  }
-
-  function buscar() {
-    const cidadeInput = document.getElementById('Cidade').value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const estado = document.getElementById('Estado').value;
-
-    const filtrados = dados.filter(h => {
-      const cidadeHospital = h["Cidade"]?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const estadoHospital = h["Estado"]?.trim().toUpperCase();
-
-      const matchCidade = cidadeHospital?.includes(cidadeInput);
-      const matchEstado = !estado || estadoHospital === estado;
-      return matchCidade && matchEstado;
-    });
-
-    mostrarResultados(filtrados);
-  }
-
-  function buscarPorLocalizacao() {
-    if (!navigator.geolocation) {
-      alert("Geolocalização não suportada.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(pos => {
-      const { latitude, longitude } = pos.coords;
-
-      const proximos = dados
-        .filter(h => {
-          const lat = parseFloat(h["Latitude"]);
-          const lon = parseFloat(h["Longitude"]);
-          return !isNaN(lat) && !isNaN(lon) &&
-                 lat >= -90 && lat <= 90 &&
-                 lon >= -180 && lon <= 180;
-        })
-        .map(h => {
-          const dist = calcularDistancia(
-            latitude, longitude,
-            parseFloat(h["Latitude"]),
-            parseFloat(h["Longitude"])
-          );
-          return { ...h, distancia: dist };
-        })
-        .sort((a, b) => a.distancia - b.distancia)
-        .slice(0, 5);
-
-      mostrarResultados(proximos);
-    });
-  }
-
+  // Fórmula de Haversine
   function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371;
+    const R = 6371.0088;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * Math.PI / 180) *
+      Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Number((R * c).toFixed(3));
   }
 
-  carregarDados();
+  // Busca por localização
+  function buscarLocalizacao() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const latUser = pos.coords.latitude;
+        const lonUser = pos.coords.longitude;
+
+        const listaOrdenada = hospitais.map(h => {
+          const dist = calcularDistancia(latUser, lonUser, h.Latitude, h.Longitude);
+          return { ...h, Distancia: dist };
+        }).sort((a, b) => a.Distancia - b.Distancia);
+
+        mostrarHospitais(listaOrdenada.slice(0, 3));
+
+      }, err => {
+        alert("Erro ao obter localização: " + err.message);
+      });
+    } else {
+      alert("Geolocalização não suportada pelo seu navegador.");
+    }
+  }
+
+  // Busca manual
+  function buscarManual() {
+    const cidade = document.getElementById("cidade").value.trim().toLowerCase();
+    const estado = document.getElementById("estado").value.trim().toUpperCase();
+
+    if (!cidade || !estado) {
+      alert("Preencha a cidade e o UF.");
+      return;
+    }
+
+    const resultados = hospitais.filter(h =>
+      h.Cidade.toLowerCase() === cidade && h.Estado.toUpperCase() === estado
+    );
+
+    if (resultados.length === 0) {
+      document.getElementById("resultado").innerHTML = `<p>Nenhum hospital encontrado para ${cidade.toUpperCase()} - ${estado}.</p>`;
+    } else {
+      mostrarHospitais(resultados);
+    }
+  }
+
+  // Exibe resultados na tela
+  function mostrarHospitais(lista) {
+    let html = "";
+    lista.forEach(h => {
+      html += `
+        <div class="hospital">
+          <h3>${h.Nome}</h3>
+          <p><strong>Endereço:</strong> ${h.Endereço}</p>
+          <p><strong>Cidade:</strong> ${h.Cidade} - ${h.Estado}</p>
+          ${h.Distancia !== undefined ? `<p><strong>Distância:</strong> ${h.Distancia} km</p>` : ""}
+        </div>
+      `;
+    });
+    document.getElementById("resultado").innerHTML = html;
+  }
 </script>
 
 </body>

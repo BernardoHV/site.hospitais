@@ -15308,7 +15308,7 @@
 
   // Fórmula de Haversine
   function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371.0088;
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
@@ -15327,10 +15327,36 @@
         const latUser = pos.coords.latitude;
         const lonUser = pos.coords.longitude;
 
-        const listaOrdenada = hospitais.map(h => {
-          const dist = calcularDistancia(latUser, lonUser, h.Latitude, h.Longitude);
+        console.log("Localização do usuário:", latUser, lonUser);
+
+          const listaOrdenada = hospitais.map(h => {
+          const latH = Number(h.Latitude);
+          const lonH = Number(h.Longitude);
+
+if (
+  isNaN(latH) || isNaN(lonH) ||
+  latH < -90 || latH > 90 ||
+  lonH < -180 || lonH > 180
+) {
+  console.error("Coordenadas inválidas:", h);
+  return null;
+}
+
+const dist = calcularDistancia(
+  Number(latUser),
+  Number(lonUser),
+  latH,
+  lonH
+);
+;
           return { ...h, Distancia: dist };
         }).sort((a, b) => a.Distancia - b.Distancia);
+
+        listaOrdenada.forEach(h => {
+          if (h.Distancia > 500) {
+            console.warn("Distância suspeita:", h);
+               }
+              });
 
         mostrarHospitais(listaOrdenada.slice(0, 3));
 
